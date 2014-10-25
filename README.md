@@ -1,32 +1,25 @@
-# ![logo](http://www.projectskyfire.org/public/style_images/9_1_s2QNl.png) [![Build Status](https://travis-ci.org/ProjectSkyfire/SkyFire_5xx.png)](https://travis-ci.org/ProjectSkyfire/SkyFire_5xx)
+# !PandariaCore
 
 
 ## Introduction
 
-SkyFire is a *MMORPG* Framework based mostly in C++.
+PandariaCore is a *MMORPG* Framework based mostly in C++.
 
-SkyFireEMU is a MMORPG Framework based mostly on C++. It is completely 
-open source, and is community supported. It is derived
-from CactusEmu, TrinityCore, and MaNGOS, the Massive Network Game Object Servers, 
-and is based on the code of there projects with extensive changes over time to optimize, 
-improve and cleanup the codebase at the same time as improving the ingame mechanics
-and functionality.
+It is derived from SkyFireEMU, CactusEmu, TrinityCore, and MaNGOS, and is based on
+the code of there projects with extensive changes over time to optimize, improve
+and cleanup the codebase at the same time as improving the ingame mechanics and
+functionality.
 
 It is completely open source; community involvement is highly encouraged.
 
 If you wish to contribute ideas or code please visit our site linked below or
 make pull requests to our 
-[Github repository](https://github.com/ProjectSkyfire/SkyFire_5xx).
+[Github repository](https://github.com/PandariaCore/PandariaCore).
 
-For further information on the SkyFire project, please visit our project website at 
-[projectskyfire.org](http://www.projectskyfire.org).
+## Build Status
 
-Connection patcher requiered.
-[SkyFire-Community-Tools] (https://github.com/ProjectSkyfire/SkyFire-Community-Tools).
+[Build status](https://travis-ci.org/PandariaCore/PandariaCore/builds)
 
-## Status
-
-[Build status](https://travis-ci.org/ProjectSkyfire/SkyFire_5xx/builds)
 
 ## Requirements
 
@@ -40,22 +33,20 @@ Connection patcher requiered.
 + MS Visual Studio = 12 (2013) (Windows only)
 
 
-## Install
-
-Detailed installation guides are available in the wiki for
-
-[Windows](http://wiki.projectskyfire.org/index.php?title=Installation_Windows),
-[Linux](http://wiki.projectskyfire.org/index.php?title=Installation_Linux) and
-[Mac OSX](http://wiki.projectskyfire.org/index.php?title=Installation_Mac_OS_X).
-
-
 ## Reporting issues
 
 Do not report issues on this repo untill it is stable.
 
+
 ## Submitting fixes
 
 Fixes are submitted as pull requests via Github. 
+
+
+## To-Do List
+
+Read File [TO-DO] (TODO.md)
+
 
 ## Copyright
 
@@ -67,15 +58,3 @@ Read file [COPYING](COPYING.md)
 ## Authors &amp; Contributors
 
 Read file [THANKS](THANKS.md)
-
-## To-Do List
-
-Read File [TO-DO] (TODO.md)
-
-## Links
-
-Forum [http://www.projectskyfire.org](http://www.projectskyfire.org)
-
-Database [http://www.projectskyfire.org/index.php?/files/](http://www.projectskyfire.org/index.php?/files/)
-
-Wiki [http://wiki.projectskyfire.org](http://wiki.projectskyfire.org)

@@ -410,6 +410,8 @@ void WorldSession::HandleBattleFieldPortOpcode(WorldPacket &recvData)
 
     action = recvData.ReadBit();
 
+    recvData.FlushBits();
+
     recvData >> queueSlot;
     recvData >> id;
     recvData >> time;

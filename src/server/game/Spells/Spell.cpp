@@ -4183,8 +4183,8 @@ void Spell::SendSpellStart()
             data << uint8(powerType);
         }*/
 
-        data << uint8(m_spellInfo->PowerType);
-        data << int32(m_caster->GetPower((Powers)m_spellInfo->PowerType));
+        data << uint32(m_spellInfo->PowerType);
+        data << uint32(m_caster->GetPower((Powers)m_spellInfo->PowerType));
     }
 
     data << uint32(castFlags);
@@ -4713,35 +4713,31 @@ void Spell::SendLogExecute()
     ObjectGuid guid = m_caster->GetGUID();
 
     // TODO: Finish me
-    WorldPacket data(SMSG_SPELLLOGEXECUTE, (8+4+4+4+4+8));
-    /*
-    data.WriteBit(0);
-    data.WriteBit(guid[6]);
-    data.WriteBits(0, 19); // Count
-    data.WriteBit(guid[1]);
-    data.WriteBit(guid[4]);
-    data.WriteBit(guid[7]);
-    data.WriteBit(guid[5]);
+    WorldPacket data(SMSG_SPELLLOGEXECUTE, (8 + 4 + 4 + 4 + 4 + 8));
     data.WriteBit(guid[0]);
+    data.WriteBit(guid[6]);
+    data.WriteBit(guid[5]);
+    data.WriteBit(guid[7]);
     data.WriteBit(guid[2]);
+    data.WriteBits(0, 19); // Count
+    data.WriteBit(guid[4]);
+    data.WriteBit(guid[1]);
     data.WriteBit(guid[3]);
+    data.WriteBit(0);
 
+    data.FlushBits();
+
+    data << uint32(m_spellInfo->Id);
     data.WriteByteSeq(guid[5]);
-    data.WriteByteSeq(guid[2]);
-    data.WriteByteSeq(guid[1]);
-    data.WriteByteSeq(guid[3]);
-    data.WriteByteSeq(guid[0]);
     data.WriteByteSeq(guid[7]);
-    data << uint32(m_spellInfo->Id);
+    data.WriteByteSeq(guid[1]);
     data.WriteByteSeq(guid[6]);
+    data.WriteByteSeq(guid[2]);
+    data.WriteByteSeq(guid[0]);
     data.WriteByteSeq(guid[4]);
-    */
+    data.WriteByteSeq(guid[3]);
 
-    data.append(m_caster->GetPackGUID());
-
-    data << uint32(m_spellInfo->Id);
-
-    uint8 effCount = 0;
+    /*uint8 effCount = 0;
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
     {
         if (m_effectExecuteData[i])
@@ -4751,19 +4747,21 @@ void Spell::SendLogExecute()
     if (!effCount)
         return;
 
-    data << uint32(effCount);
+    data << uint32(effCount);*/
+
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
     {
         if (!m_effectExecuteData[i])
             continue;
 
-        data << uint32(m_spellInfo->Effects[i].Effect);             // spell effect
+        //data << uint32(m_spellInfo->Effects[i].Effect);             // spell effect
 
-        data.append(*m_effectExecuteData[i]);
+        //data.append(*m_effectExecuteData[i]);
 
         delete m_effectExecuteData[i];
         m_effectExecuteData[i] = NULL;
     }
+
     m_caster->SendMessageToSet(&data, true);
 }
 

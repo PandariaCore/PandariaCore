@@ -1402,9 +1402,10 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
 
 void Unit::HandleEmoteCommand(uint32 anim_id)
 {
-    WorldPacket data(SMSG_EMOTE, 4 + 8);
-    data << uint32(anim_id);
+    WorldPacket data(SMSG_EMOTE, 8);
+
     data << uint64(GetGUID());
+
     SendMessageToSet(&data, true);
 }
 
@@ -5034,8 +5035,8 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo* damageInfo)
     data.FlushBits();
 
     size_t size = data.wpos();
-    data << uint32(0); // Placeholder
-
+    data << uint32(0);                                      // Placeholder
+    
     data << uint32(damageInfo->HitInfo);
     data.append(damageInfo->attacker->GetPackGUID());
     data.append(damageInfo->target->GetPackGUID());
@@ -5064,8 +5065,8 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo* damageInfo)
     }
 
     data << uint8(damageInfo->TargetState);
-    data << uint32(0);  // Unknown attackerstate
-    data << uint32(0);  // Melee spellid
+    data << uint32(0);                                      // Unknown attackerstate
+    data << uint32(0);                                      // Melee spellid
 
     if (damageInfo->HitInfo & HITINFO_BLOCK)
         data << uint32(damageInfo->blocked_amount);
@@ -5085,19 +5086,15 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo* damageInfo)
         data << float(0);
         data << float(0);
         data << float(0);
-
-        for (uint8 i = 0; i < 2; ++i)
-        {
-            data << float(0);
-            data << float(0);
-        }
+        data << float(0);
+        data << float(0);
         data << uint32(0);
     }
 
     if (damageInfo->HitInfo & (HITINFO_BLOCK | HITINFO_UNK12))
         data << float(0);
 
-    data.put(size, data.wpos() - size - 4); // Blizz - Weird and Lazy people....
+    data.put(size, data.wpos() - size -4); // Blizz - Weird and Lazy people....
     SendMessageToSet(&data, true);
 }
 
@@ -16095,14 +16092,53 @@ void Unit::SendThreatListUpdate()
 
         TC_LOG_DEBUG("entities.unit", "WORLD: Send SMSG_THREAT_UPDATE Message");
         WorldPacket data(SMSG_THREAT_UPDATE, 8 + count * 8);
-        data.append(GetPackGUID());
-        data << uint32(count);
+
+        ObjectGuid guid = GetGUID();
+        data.WriteBit(guid[5]);
+        data.WriteBit(guid[6]);
+        data.WriteBit(guid[1]);
+        data.WriteBit(guid[3]);
+        data.WriteBit(guid[7]);
+        data.WriteBit(guid[0]);
+        data.WriteBit(guid[4]);
+        data.WriteBits(count, 21);
         ThreatContainer::StorageType const &tlist = getThreatManager().getThreatList();
         for (ThreatContainer::StorageType::const_iterator itr = tlist.begin(); itr != tlist.end(); ++itr)
         {
-            data.appendPackGUID((*itr)->getUnitGuid());
-            data << uint32((*itr)->getThreat()*100);
+            ObjectGuid targetGuid = (*itr)->getUnitGuid();
+            data.WriteBit(targetGuid[2]);
+            data.WriteBit(targetGuid[3]);
+            data.WriteBit(targetGuid[6]);
+            data.WriteBit(targetGuid[5]);
+            data.WriteBit(targetGuid[1]);
+            data.WriteBit(targetGuid[4]);
+            data.WriteBit(targetGuid[0]);
+            data.WriteBit(targetGuid[7]);
         }
+        data.WriteBit(guid[2]);
+        data.FlushBits();
+        for (ThreatContainer::StorageType::const_iterator itr = tlist.begin(); itr != tlist.end(); ++itr)
+        {
+            ObjectGuid targetGuid = (*itr)->getUnitGuid();
+            data.WriteByteSeq(targetGuid[6]);
+            data.WriteByteSeq(targetGuid[7]);
+            data.WriteByteSeq(targetGuid[0]);
+            data.WriteByteSeq(targetGuid[1]);
+            data.WriteByteSeq(targetGuid[2]);
+            data.WriteByteSeq(targetGuid[5]);
+            data.WriteByteSeq(targetGuid[3]);
+            data.WriteByteSeq(targetGuid[4]);
+            data << uint32((*itr)->getThreat() * 100);
+        }
+        data.WriteByteSeq(guid[1]);
+        data.WriteByteSeq(guid[4]);
+        data.WriteByteSeq(guid[2]);
+        data.WriteByteSeq(guid[3]);
+        data.WriteByteSeq(guid[5]);
+        data.WriteByteSeq(guid[6]);
+        data.WriteByteSeq(guid[0]);
+        data.WriteByteSeq(guid[7]);
+
         SendMessageToSet(&data, false);
     }
 }
@@ -16139,9 +16175,46 @@ void Unit::SendClearThreatListOpcode()
 void Unit::SendRemoveFromThreatListOpcode(HostileReference* pHostileReference)
 {
     TC_LOG_DEBUG("entities.unit", "WORLD: Send SMSG_THREAT_REMOVE Message");
-    WorldPacket data(SMSG_THREAT_REMOVE, 8 + 8);
-    data.append(GetPackGUID());
-    data.appendPackGUID(pHostileReference->getUnitGuid());
+
+    ObjectGuid victimGUID = GetGUID();
+    ObjectGuid hostileGUID = pHostileReference->getUnitGuid();
+    
+    WorldPacket data(SMSG_THREAT_REMOVE, 1 + 1 + 8 + 8);
+    
+    data.WriteBit(victimGUID[0]);
+    data.WriteBit(victimGUID[1]);
+    data.WriteBit(victimGUID[5]);
+    data.WriteBit(hostileGUID[4]);
+    data.WriteBit(hostileGUID[0]);
+    data.WriteBit(victimGUID[4]);
+    data.WriteBit(victimGUID[6]);
+    data.WriteBit(hostileGUID[7]);
+    data.WriteBit(hostileGUID[6]);
+    data.WriteBit(hostileGUID[3]);
+    data.WriteBit(victimGUID[2]);
+    data.WriteBit(hostileGUID[1]);
+    data.WriteBit(victimGUID[3]);
+    data.WriteBit(victimGUID[7]);
+    data.WriteBit(hostileGUID[5]);
+    data.WriteBit(hostileGUID[2]);
+    
+    data.WriteByteSeq(hostileGUID[3]);
+    data.WriteByteSeq(hostileGUID[0]);
+    data.WriteByteSeq(hostileGUID[2]);
+    data.WriteByteSeq(victimGUID[5]);
+    data.WriteByteSeq(victimGUID[4]);
+    data.WriteByteSeq(victimGUID[7]);
+    data.WriteByteSeq(victimGUID[3]);
+    data.WriteByteSeq(victimGUID[0]);
+    data.WriteByteSeq(hostileGUID[4]);
+    data.WriteByteSeq(victimGUID[1]);
+    data.WriteByteSeq(hostileGUID[1]);
+    data.WriteByteSeq(victimGUID[6]);
+    data.WriteByteSeq(hostileGUID[7]);
+    data.WriteByteSeq(hostileGUID[6]);
+    data.WriteByteSeq(victimGUID[2]);
+    data.WriteByteSeq(hostileGUID[5]);
+
     SendMessageToSet(&data, false);
 }
 

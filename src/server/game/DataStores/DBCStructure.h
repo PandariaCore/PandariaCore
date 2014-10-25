@@ -530,10 +530,10 @@ struct AchievementCriteriaEntry
     uint32  timedCriteriaMiscId;                            // 13       m_timer_asset_id Alway appears with timed events, used internally to start the achievement, store
     uint32  timeLimit;                                      // 14       m_timer_time time limit in seconds
     uint32  showOrder;                                      // 15       m_ui_order  also used in achievement shift-links as index in state bitmask
-    //uint32 unk1;                                          // 16 only one value, still unknown
-    //uint32 unk2;                                          // 17 all zeros
+    uint32 unk1;                                            // 16 only one value, still unknown
+    uint32 unk2;                                            // 17 all zeros
     uint32 additionalConditionType[MAX_ADDITIONAL_CRITERIA_CONDITIONS];      // 18-20
-    uint32 additionalConditionValue[MAX_ADDITIONAL_CRITERIA_CONDITIONS - 1]; // 21-22 WTF one column was cut off here in 4.3.4
+    uint32 additionalConditionValue[MAX_ADDITIONAL_CRITERIA_CONDITIONS];     // 21-23
 };
 
 struct AreaTableEntry
@@ -2080,7 +2080,7 @@ struct SpecializationSpellsEntry
 struct SpellEffectEntry
 {
     uint32    Id;                                           // 0         m_ID
-    //uint32    Unk0;                                       // 1         unk - Pandaria
+    uint32    EffectDifficulty;                             // 1         m_effectDifficulty
     uint32    Effect;                                       // 2         m_effect
     float     EffectValueMultiplier;                        // 3         m_effectAmplitude
     uint32    EffectApplyAuraName;                          // 4         m_effectAura
@@ -2089,7 +2089,7 @@ struct SpellEffectEntry
     float     EffectBonusMultiplier;                        // 7         m_effectBonus
     float     EffectDamageMultiplier;                       // 8         m_effectChainAmplitude
     uint32    EffectChainTarget;                            // 9         m_effectChainTargets
-    int32     EffectDieSides;                               // 10         m_effectDieSides
+    int32     EffectDieSides;                               // 10        m_effectDieSides
     uint32    EffectItemType;                               // 11        m_effectItemType
     uint32    EffectMechanic;                               // 12        m_effectMechanic
     int32     EffectMiscValue;                              // 13        m_effectMiscValue

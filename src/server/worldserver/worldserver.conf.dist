@@ -1,6 +1,6 @@
-################################################
-#   SkyFire World Server configuration file    #
-################################################
+#####################################################
+#   PandariaCore World Server configuration file    #
+#####################################################
 [worldserver]
 
 ###################################################################################################
@@ -63,7 +63,7 @@ RealmID = 1
 #    DataDir
 #        Description: Data directory setting.
 #        Important:   DataDir needs to be quoted, as the string might contain space characters.
-#        Example:     "@prefix@/share/skyfire"
+#        Example:     "@prefix@/share/pandariacore"
 #        Default:     "."
 
 DataDir = "."
@@ -88,13 +88,13 @@ LogsDir = ""
 #                                                                 section my.ini)
 #                     ".;/path/to/unix_socket;username;password;database" - (use Unix sockets on
 #                                                                           Unix/Linux)
-#        Default:     "127.0.0.1;3306;skyfire;skyfire;auth"       - (LoginDatabaseInfo)
-#                     "127.0.0.1;3306;skyfire;skyfire;world"      - (WorldDatabaseInfo)
-#                     "127.0.0.1;3306;skyfire;skyfire;characters" - (CharacterDatabaseInfo)
+#        Default:     "127.0.0.1;3306;pandariacore;pandariacore;auth"       - (LoginDatabaseInfo)
+#                     "127.0.0.1;3306;pandariacore;pandariacore;world"      - (WorldDatabaseInfo)
+#                     "127.0.0.1;3306;pandariacore;pandariacore;characters" - (CharacterDatabaseInfo)
 
-LoginDatabaseInfo     = "127.0.0.1;3306;skyfire;skyfire;auth"
-WorldDatabaseInfo     = "127.0.0.1;3306;skyfire;skyfire;world"
-CharacterDatabaseInfo = "127.0.0.1;3306;skyfire;skyfire;characters"
+LoginDatabaseInfo     = "127.0.0.1;3306;pandariacore;pandariacore;auth"
+WorldDatabaseInfo     = "127.0.0.1;3306;pandariacore;pandariacore;world"
+CharacterDatabaseInfo = "127.0.0.1;3306;pandariacore;pandariacore;characters"
 
 #
 #    LoginDatabase.WorkerThreads
@@ -1052,10 +1052,10 @@ BeepAtStart = 1
 #    Motd
 #        Description: Message of the Day, displayed at login.
 #                     Use '@' for a newline and be sure to escape special characters.
-#        Example:     "Welcome to John\'s Server@This server runs on SkyFire Core."
-#        Default:     "Welcome to a SkyFire server."
+#        Example:     "Welcome to John\'s Server@This server runs on PandariaCore."
+#        Default:     "Welcome to a PandariaCore Testserver."
 
-Motd = "Welcome to a SkyFire server."
+Motd = "Welcome to a PandariaCore Testserver."
 
 #
 #    Server.LoginInfo

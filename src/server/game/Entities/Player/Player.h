@@ -1483,6 +1483,7 @@ class Player : public Unit, public GridObject<Player>
 
         Player* GetTrader() const { return m_trade ? m_trade->GetTrader() : NULL; }
         TradeData* GetTradeData() const { return m_trade; }
+        void IgnoreTrade();
         void TradeCancel(bool sendback);
 
         void UpdateEnchantTime(uint32 time);

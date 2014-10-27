@@ -4938,10 +4938,29 @@ void Spell::SendChannelUpdate(uint32 time)
         m_caster->SetUInt32Value(UNIT_FIELD_CHANNEL_SPELL, 0);
     }
 
-    WorldPacket data(MSG_CHANNEL_UPDATE, 8+4);
-    data.append(m_caster->GetPackGUID());
-    data << uint32(time);
+    ObjectGuid guid = m_caster->GetGUID();
 
+    WorldPacket data(SMSG_SPELL_CHANNEL_UPDATE, 8 + 4);
+    
+    data.WriteBit(guid[0]);
+    data.WriteBit(guid[3]);
+    data.WriteBit(guid[4]);
+    data.WriteBit(guid[1]);
+    data.WriteBit(guid[5]);
+    data.WriteBit(guid[2]);
+    data.WriteBit(guid[6]);
+    data.WriteBit(guid[7]);
+    
+    data.WriteByteSeq(guid[4]);
+    data.WriteByteSeq(guid[7]);
+    data.WriteByteSeq(guid[1]);
+    data.WriteByteSeq(guid[2]);
+    data.WriteByteSeq(guid[6]);
+    data.WriteByteSeq(guid[5]);
+    data << uint32(time);
+    data.WriteByteSeq(guid[0]);
+    data.WriteByteSeq(guid[3]);
+    
     m_caster->SendMessageToSet(&data, true);
 }
 
@@ -4952,29 +4971,101 @@ void Spell::SendChannelStart(uint32 duration)
         if (m_UniqueTargetInfo.size() + m_UniqueGOTargetInfo.size() == 1)   // this is for TARGET_SELECT_CATEGORY_NEARBY
             channelTarget = !m_UniqueTargetInfo.empty() ? m_UniqueTargetInfo.front().targetGUID : m_UniqueGOTargetInfo.front().targetGUID;
 
-    WorldPacket data(MSG_CHANNEL_START, (8+4+4));
-    data.append(m_caster->GetPackGUID());
-    data << uint32(m_spellInfo->Id);
-    data << uint32(duration);
-    data << uint8(0);                           // immunity (castflag & 0x04000000)
-    /*
-    if (immunity)
+    ObjectGuid casterGuid = m_caster->GetGUID();
+    ObjectGuid targetGuid = channelTarget;
+
+    WorldPacket data(SMSG_SPELL_CHANNEL_START, (8+4+4));
+
+    data.WriteBit(casterGuid[7]);
+    data.WriteBit(casterGuid[5]);
+    data.WriteBit(casterGuid[4]);
+    data.WriteBit(casterGuid[1]);
+
+    data << uint8(0);                           // healPrediction (castflag & 0x40000000)
+    /*if (healPrediction)
+    {
+        data.WriteBit(targetGuid[6]);  // 54
+        data.WriteBit(targetGuid[4]);  // 52
+        data.WriteBit(targetGuid[0]);  // 48
+
+        data << uint8(0);                       // !hasType
+
+        data.WriteBit(targetGuid[3]);  // 51
+        data.WriteBit(targetGuid[7]);  // 55
+        data.WriteBit(targetGuid[5]);  // 53
+        data.WriteBit(targetGuid[1]);  // 49
+        data.WriteBit(targetGuid[2]);  // 50
+
+        data << uint8(0);                       // !hasHealAmount
+        data << uint8(0);                       // unk3
+        data << uint8(0);                       // fake bit
+        
+        // packed guid (unused ?)
+        data.WriteBit(unkGuid[4]);
+        data.WriteBit(unkGuid[5]);
+        data.WriteBit(unkGuid[1]);
+        data.WriteBit(unkGuid[7]);
+        data.WriteBit(unkGuid[0]);
+        data.WriteBit(unkGuid[2]);
+        data.WriteBit(unkGuid[3]);
+        data.WriteBit(unkGuid[6]);
+    }*/
+
+    data.WriteBit(casterGuid[3]);
+    data.WriteBit(casterGuid[2]);
+    data.WriteBit(casterGuid[0]);
+    data.WriteBit(casterGuid[6]);
+
+    data << uint8(0);                           // hasImmunity (castflag & 0x04000000)
+
+    /*if (healPrediction)
+    {
+        data.WriteByteSeq(unkGuid[4]);
+        data.WriteByteSeq(unkGuid[6]);
+        data.WriteByteSeq(unkGuid[1]);
+        data.WriteByteSeq(unkGuid[0]);
+        data.WriteByteSeq(unkGuid[7]);
+        data.WriteByteSeq(unkGuid[3]);
+        data.WriteByteSeq(unkGuid[2]);
+        data.WriteByteSeq(unkGuid[5]);
+
+        if (hasType)
+            data << uint8(0);                   // Type
+
+        data.WriteByteSeq(targetGuid[4]);
+        data.WriteByteSeq(targetGuid[5]);
+        data.WriteByteSeq(targetGuid[1]);
+        data.WriteByteSeq(targetGuid[3]);
+
+        if (hasHealAmount)
+            data << uint32(0);                  // Heal Amount
+
+        data.WriteByteSeq(targetGuid[6]);
+        data.WriteByteSeq(targetGuid[7]);
+        data.WriteByteSeq(targetGuid[2]);
+        data.WriteByteSeq(targetGuid[0]);
+    }*/
+    
+    /*if (hasImmunity)
     {
         data << uint32();                       // CastSchoolImmunities
         data << uint32();                       // CastImmunities
-    }
-    */
-    data << uint8(0);                           // healPrediction (castflag & 0x40000000)
-    /*
-    if (healPrediction)
-    {
-        data.appendPackGUID(channelTarget);     // target packguid
-        data << uint32();                       // spellid
-        data << uint8(0);                       // unk3
-        if (unk3 == 2)
-            data.append();                      // unk packed guid (unused ?)
-    }
-    */
+    }*/
+
+    data.WriteByteSeq(casterGuid[6]);
+    data.WriteByteSeq(casterGuid[7]);
+    data.WriteByteSeq(casterGuid[3]);
+    data.WriteByteSeq(casterGuid[1]);
+    data.WriteByteSeq(casterGuid[0]);
+
+    data << uint32(duration);
+
+    data.WriteByteSeq(casterGuid[5]);
+    data.WriteByteSeq(casterGuid[4]);
+    data.WriteByteSeq(casterGuid[2]);
+
+    data << uint32(m_spellInfo->Id);
+
     m_caster->SendMessageToSet(&data, true);
 
     m_timer = duration;

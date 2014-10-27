@@ -2376,8 +2376,28 @@ void WorldObject::SendMessageToSet(WorldPacket* data, Player const* skipped_rcvr
 
 void WorldObject::SendObjectDeSpawnAnim(uint64 guid)
 {
+    ObjectGuid oGuid = guid;
+
     WorldPacket data(SMSG_GAMEOBJECT_DESPAWN_ANIM, 8);
-    data << uint64(guid);
+
+    data.WriteBit(oGuid[0]);  // 16
+    data.WriteBit(oGuid[2]);  // 18
+    data.WriteBit(oGuid[4]);  // 20
+    data.WriteBit(oGuid[1]);  // 17
+    data.WriteBit(oGuid[7]);  // 23
+    data.WriteBit(oGuid[3]);  // 19
+    data.WriteBit(oGuid[6]);  // 22
+    data.WriteBit(oGuid[5]);  // 21
+
+    data.WriteByteSeq(oGuid[0]);  // 16
+    data.WriteByteSeq(oGuid[2]);  // 18
+    data.WriteByteSeq(oGuid[4]);  // 20
+    data.WriteByteSeq(oGuid[5]);  // 21
+    data.WriteByteSeq(oGuid[7]);  // 23
+    data.WriteByteSeq(oGuid[3]);  // 19
+    data.WriteByteSeq(oGuid[1]);  // 17
+    data.WriteByteSeq(oGuid[6]);  // 22
+
     SendMessageToSet(&data, true);
 }
 

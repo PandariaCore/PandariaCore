@@ -716,7 +716,7 @@ void WorldSession::SendLfgBootProposalUpdate(lfg::LfgPlayerBoot const& boot)
         GetPlayerInfo().c_str(), uint8(boot.inProgress), uint8(playerVote != lfg::LFG_ANSWER_PENDING),
         uint8(playerVote == lfg::LFG_ANSWER_AGREE), GUID_LOPART(boot.victim), votesNum, agreeNum,
         secsleft, lfg::LFG_GROUP_KICK_VOTES_NEEDED, boot.reason.c_str());
-    WorldPacket data(SMSG_LFG_BOOT_PROPOSAL_UPDATE, 1 + 1 + 1 + 1 + 8 + 4 + 4 + 4 + 4 + boot.reason.length());
+    WorldPacket data(SMSG_LFG_BOOT_PLAYER, 1 + 1 + 1 + 1 + 8 + 4 + 4 + 4 + 4 + boot.reason.length());
     data << uint8(boot.inProgress);                                 // Vote in progress
     data << uint8(agreeNum >= lfg::LFG_GROUP_KICK_VOTES_NEEDED);    // Did succeed
     data << uint8(playerVote != lfg::LFG_ANSWER_PENDING);           // Did Vote
@@ -835,7 +835,7 @@ void WorldSession::SendLfgLfrList(bool update)
 {
     TC_LOG_DEBUG("lfg", "SMSG_LFG_LFR_LIST %s update: %u",
         GetPlayerInfo().c_str(), update ? 1 : 0);
-    WorldPacket data(SMSG_LFG_UPDATE_SEARCH, 1);
+    WorldPacket data(SMSG_LFG_SEARCH_RESULTS, 1);
     data << uint8(update);                                 // In Lfg Queue?
     SendPacket(&data);
 }

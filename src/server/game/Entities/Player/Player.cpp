@@ -3101,29 +3101,29 @@ void Player::SendLogXPGain(uint32 GivenXP, Unit* victim, uint32 BonusXP, bool re
 
     WorldPacket data(SMSG_LOG_XPGAIN, 1 + 1 + 8 + 4 + 4 + 4 + 1);
     data.WriteBit(0);                                       // has XP
-    data.WriteBit(guid[6]);
-    data.WriteBit(guid[3]);
-    data.WriteBit(0);                                       // has group bonus
-    data.WriteBit(guid[0]);
-    data.WriteBit(guid[7]);
-    data.WriteBit(0);                                       // unknown
-    data.WriteBit(guid[2]);
     data.WriteBit(guid[1]);
-    data.WriteBit(guid[5]);
+    data.WriteBit(guid[2]);
+    data.WriteBit(guid[7]);
     data.WriteBit(guid[4]);
+    data.WriteBit(guid[3]);
+    data.WriteBit(0);                                       // unknown
+    data.WriteBit(guid[0]);
+    data.WriteBit(guid[5]);
+    data.WriteBit(guid[6]);
+    data.WriteBit(0);                                       // has group bonus
 
+    data.WriteByteSeq(guid[4]);
+    data.WriteByteSeq(guid[2]);
+    data << uint8(recruitAFriend ? 1 : 0);                  // does the GivenXP include a RaF bonus?
+    data << float(1);                                       // 1 - none 0 - 100% group bonus output
     data.WriteByteSeq(guid[7]);
     data.WriteByteSeq(guid[1]);
     data.WriteByteSeq(guid[3]);
-    data.WriteByteSeq(guid[5]);
-    data.WriteByteSeq(guid[2]);
-    data << float(1);                                       // 1 - none 0 - 100% group bonus output
-    data.WriteByteSeq(guid[4]);
     data.WriteByteSeq(guid[6]);
-    data << uint32(GivenXP);                                // experience without bonus
     data << uint32(GivenXP + BonusXP);                      // given experience
+    data << uint32(GivenXP);                                // experience without bonus
     data.WriteByteSeq(guid[0]);
-    data << uint8(recruitAFriend ? 1 : 0);                  // does the GivenXP include a RaF bonus?
+    data.WriteByteSeq(guid[5]);
 
     GetSession()->SendPacket(&data);
 }
@@ -23027,25 +23027,26 @@ void Player::SendCooldownEvent(SpellInfo const* spellInfo, uint32 itemId /*= 0*/
     // Send activate cooldown timer (possible 0) at client side
     ObjectGuid guid = GetGUID();
 
-    WorldPacket data(SMSG_COOLDOWN_EVENT, 4 + 8);
-    data.WriteBit(guid[4]);
-    data.WriteBit(guid[7]);
-    data.WriteBit(guid[1]);
-    data.WriteBit(guid[6]);
-    data.WriteBit(guid[5]);
+    WorldPacket data(SMSG_COOLDOWN_EVENT, 2 + 4 + 8);
     data.WriteBit(guid[3]);
-    data.WriteBit(guid[0]);
+    data.WriteBit(guid[6]);
     data.WriteBit(guid[2]);
+    data << uint16(0);               // unk
+    data.WriteBit(guid[7]);
+    data.WriteBit(guid[0]);
+    data.WriteBit(guid[1]);
+    data.WriteBit(guid[5]);
+    data.WriteBit(guid[4]);
 
     data.WriteByteSeq(guid[0]);
-    data.WriteByteSeq(guid[5]);
     data.WriteByteSeq(guid[1]);
-    data.WriteByteSeq(guid[4]);
-    data.WriteByteSeq(guid[3]);
     data.WriteByteSeq(guid[2]);
-    data.WriteByteSeq(guid[6]);
-    data << uint32(spellInfo->Id);
     data.WriteByteSeq(guid[7]);
+    data.WriteByteSeq(guid[3]);
+    data.WriteByteSeq(guid[6]);
+    data.WriteByteSeq(guid[5]);
+    data << uint32(spellInfo->Id);
+    data.WriteByteSeq(guid[4]);
     SendDirectMessage(&data);
 }
 
@@ -25098,24 +25099,25 @@ void Player::SetClientControl(Unit* target, uint8 allowMove)
     ObjectGuid guid = target->GetGUID();
 
     WorldPacket data(SMSG_CLIENT_CONTROL_UPDATE, 9 + 1);
-    data.WriteBit(guid[2]);
-    data.WriteBit(guid[7]);
+    data.WriteBit(guid[2]);  // 26
+    data.WriteBit(guid[7]);  // 31
     data.WriteBit(allowMove);
-    data.WriteBit(guid[0]);
-    data.WriteBit(guid[3]);
-    data.WriteBit(guid[6]);
-    data.WriteBit(guid[5]);
-    data.WriteBit(guid[1]);
-    data.WriteBit(guid[4]);
+    data.WriteBit(guid[0]);  // 24
+    data.WriteBit(guid[3]);  // 27
+    data.WriteBit(guid[6]);  // 30
+    data.WriteBit(guid[5]);  // 29
+    data.WriteBit(guid[1]);  // 25
+    data.WriteBit(guid[4]);  // 28
 
-    data.WriteByteSeq(guid[1]);
-    data.WriteByteSeq(guid[5]);
-    data.WriteByteSeq(guid[7]);
-    data.WriteByteSeq(guid[4]);
-    data.WriteByteSeq(guid[2]);
-    data.WriteByteSeq(guid[6]);
-    data.WriteByteSeq(guid[3]);
-    data.WriteByteSeq(guid[0]);
+    data.WriteByteSeq(guid[1]);  // 25
+    data.WriteByteSeq(guid[5]);  // 29
+    data.WriteByteSeq(guid[7]);  // 31
+    data.WriteByteSeq(guid[4]);  // 28
+    data.WriteByteSeq(guid[2]);  // 26
+    data.WriteByteSeq(guid[6]);  // 30
+    data.WriteByteSeq(guid[3]);  // 27
+    data.WriteByteSeq(guid[0]);  // 24
+
     GetSession()->SendPacket(&data);
 
     if (target == this && allowMove == 1)
@@ -25154,7 +25156,7 @@ void Player::SetMover(Unit* target)
 
 void Player::ShowNeutralPlayerFactionSelectUI()
 {
-    WorldPacket data(SMSG_SHOW_NEURTRAL_PLAYER_FACTION_SELECT_UI);
+    WorldPacket data(SMSG_SHOW_NEUTRAL_PLAYER_FACTION_SELECT_UI);
     GetSession()->SendPacket(&data);
 }
 
@@ -26564,7 +26566,7 @@ void Player::BuildPlayerTalentsInfoData(WorldPacket* data)
     for (int i = 0; i < GetSpecsCount(); i++)
     {
         wpos[i] = data->bitwpos();
-        data->WriteBits(0, 23);
+        data->WriteBits(0, 23);                             // spec talent count
     }
 
     data->FlushBits();

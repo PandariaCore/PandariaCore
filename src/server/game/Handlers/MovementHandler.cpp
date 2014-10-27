@@ -550,23 +550,24 @@ void WorldSession::HandleMountSpecialAnimOpcode(WorldPacket& /*recvData*/)
     ObjectGuid guid = GetPlayer()->GetGUID();
 
     WorldPacket data(SMSG_MOUNTSPECIAL_ANIM, 1 + 8);
-    data.WriteBit(guid[1]);
-    data.WriteBit(guid[0]);
-    data.WriteBit(guid[5]);
-    data.WriteBit(guid[6]);
-    data.WriteBit(guid[2]);
-    data.WriteBit(guid[4]);
-    data.WriteBit(guid[7]);
-    data.WriteBit(guid[3]);
 
-    data.WriteByteSeq(guid[6]);
-    data.WriteByteSeq(guid[1]);
-    data.WriteByteSeq(guid[0]);
-    data.WriteByteSeq(guid[4]);
-    data.WriteByteSeq(guid[5]);
-    data.WriteByteSeq(guid[3]);
-    data.WriteByteSeq(guid[7]);
-    data.WriteByteSeq(guid[2]);
+    data.WriteBit(guid[5]);  // 21
+    data.WriteBit(guid[7]);  // 23
+    data.WriteBit(guid[0]);  // 16
+    data.WriteBit(guid[3]);  // 19
+    data.WriteBit(guid[2]);  // 18
+    data.WriteBit(guid[1]);  // 17
+    data.WriteBit(guid[4]);  // 20
+    data.WriteBit(guid[6]);  // 22
+
+    data.WriteByteSeq(guid[7]);  // 23
+    data.WriteByteSeq(guid[2]);  // 18
+    data.WriteByteSeq(guid[0]);  // 16
+    data.WriteByteSeq(guid[4]);  // 20
+    data.WriteByteSeq(guid[5]);  // 21
+    data.WriteByteSeq(guid[6]);  // 22
+    data.WriteByteSeq(guid[1]);  // 17
+    data.WriteByteSeq(guid[3]);  // 19
 
     GetPlayer()->SendMessageToSet(&data, false);
 }
@@ -607,15 +608,8 @@ void WorldSession::HandleMoveWaterWalkAck(WorldPacket& recvData)
 {
     TC_LOG_DEBUG("network", "CMSG_MOVE_WATER_WALK_ACK");
 
-    uint64 guid;                                            // guid - unused
-    recvData.readPackGUID(guid);
-
-    recvData.read_skip<uint32>();                          // unk
-
     MovementInfo movementInfo;
     GetPlayer()->ReadMovementInfo(recvData, &movementInfo);
-
-    recvData.read_skip<uint32>();                          // unk2
 }
 
 void WorldSession::HandleSummonResponseOpcode(WorldPacket& recvData)

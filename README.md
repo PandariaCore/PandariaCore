@@ -1,4 +1,4 @@
-# !PandariaCore
+# PandariaCore
 
 
 ## Introduction
@@ -18,8 +18,7 @@ make pull requests to our
 
 ## Build Status
 
-[Build status](https://travis-ci.org/PandariaCore/PandariaCore/builds)
-
+[![Build Status](https://travis-ci.org/PandariaCore/PandariaCore/builds)](https://travis-ci.org/PandariaCore/PandariaCore/builds)
 
 ## Requirements
 

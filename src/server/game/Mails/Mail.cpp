@@ -28,6 +28,7 @@
 #include "Item.h"
 #include "AuctionHouseMgr.h"
 #include "CalendarMgr.h"
+#include "BlackMarketMgr.h"
 
 MailSender::MailSender(Object* sender, MailStationery stationery) : m_stationery(stationery)
 {
@@ -64,6 +65,9 @@ MailSender::MailSender(CalendarEvent* sender)
 
 MailSender::MailSender(AuctionEntry* sender)
     : m_messageType(MAIL_AUCTION), m_senderId(sender->GetHouseId()), m_stationery(MAIL_STATIONERY_AUCTION) { }
+
+MailSender::MailSender(BlackMarketAuction* sender)
+    : m_messageType(MAIL_AUCTION), m_senderId(BLACKMARKET_AUCTION_HOUSE), m_stationery(MAIL_STATIONERY_AUCTION) { }
 
 MailSender::MailSender(Player* sender)
 {

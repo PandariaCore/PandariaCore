@@ -15017,17 +15017,35 @@ void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool 
 
         if (canTalk)
         {
-            std::string strOptionText = itr->second.OptionText;
-            std::string strBoxText = itr->second.BoxText;
+            std::string strOptionText, strBoxText;
+            BroadcastText const* optionBroadcastText = sObjectMgr->GetBroadcastText(itr->second.OptionBroadcastTextId);
+            BroadcastText const* boxBroadcastText = sObjectMgr->GetBroadcastText(itr->second.BoxBroadcastTextId);
+            LocaleConstant locale = GetSession()->GetSessionDbLocaleIndex();
 
-            int32 locale = GetSession()->GetSessionDbLocaleIndex();
-            if (locale >= 0)
+            if (optionBroadcastText)
+                strOptionText = optionBroadcastText->GetText(locale, getGender());
+            else
+                strOptionText = itr->second.OptionText;
+
+            if (boxBroadcastText)
+                strBoxText = boxBroadcastText->GetText(locale, getGender());
+            else
+                strBoxText = itr->second.BoxText;
+
+            if (locale != DEFAULT_LOCALE)
             {
-                uint32 idxEntry = MAKE_PAIR32(menuId, itr->second.OptionIndex);
-                if (GossipMenuItemsLocale const* no = sObjectMgr->GetGossipMenuItemsLocale(idxEntry))
+                if (!optionBroadcastText)
                 {
-                    ObjectMgr::GetLocaleString(no->OptionText, locale, strOptionText);
-                    ObjectMgr::GetLocaleString(no->BoxText, locale, strBoxText);
+                    /// Find localizations from database.
+                    if (GossipMenuItemsLocale const* gossipMenuLocale = sObjectMgr->GetGossipMenuItemsLocale(MAKE_PAIR32(menuId, menuId)))
+                        ObjectMgr::GetLocaleString(gossipMenuLocale->OptionText, locale, strOptionText);
+                }
+
+                if (!boxBroadcastText)
+                {
+                    /// Find localizations from database.
+                    if (GossipMenuItemsLocale const* gossipMenuLocale = sObjectMgr->GetGossipMenuItemsLocale(MAKE_PAIR32(menuId, menuId)))
+                        ObjectMgr::GetLocaleString(gossipMenuLocale->BoxText, locale, strBoxText);
                 }
             }
 
@@ -20917,8 +20935,28 @@ void Player::SendAttackSwingBadFacingAttack()
 
 void Player::SendAutoRepeatCancel(Unit* target)
 {
+    ObjectGuid guid = target->GetGUID();                    // may be it's target guid
+
     WorldPacket data(SMSG_CANCEL_AUTO_REPEAT, target->GetPackGUID().size());
-    data.append(target->GetPackGUID());                     // may be it's target guid
+    
+    data.WriteBit(guid[1]);  // 17
+    data.WriteBit(guid[3]);  // 19
+    data.WriteBit(guid[0]);  // 16
+    data.WriteBit(guid[4]);  // 20
+    data.WriteBit(guid[6]);  // 22
+    data.WriteBit(guid[7]);  // 23
+    data.WriteBit(guid[5]);  // 21
+    data.WriteBit(guid[2]);  // 18
+
+    data.WriteByteSeq(guid[7]);  // 23
+    data.WriteByteSeq(guid[6]);  // 22
+    data.WriteByteSeq(guid[2]);  // 18
+    data.WriteByteSeq(guid[5]);  // 21
+    data.WriteByteSeq(guid[0]);  // 16
+    data.WriteByteSeq(guid[4]);  // 20
+    data.WriteByteSeq(guid[1]);  // 17
+    data.WriteByteSeq(guid[3]);  // 19
+
     GetSession()->SendPacket(&data);
 }
 
@@ -21321,23 +21359,27 @@ void Player::PetSpellInitialize()
     TC_LOG_DEBUG("entities.pet", "Pet Spells Groups");
 
     CharmInfo* charmInfo = pet->GetCharmInfo();
+    ObjectGuid guid = pet->GetGUID();
+    
+    uint32 unkCount = 0;
+    uint32 spellHistoryCount = 0;
+    uint32 cooldownCount = pet->m_CreatureSpellCooldowns.size() + pet->m_CreatureCategoryCooldowns.size();
 
     WorldPacket data(SMSG_PET_SPELLS, 8+2+4+4+4*MAX_UNIT_ACTION_BAR_INDEX+1+1);
-    data << uint64(pet->GetGUID());
-    data << uint16(pet->GetCreatureTemplate()->family);         // creature family (required for pet talents)
-    data << uint32(pet->GetDuration());
-    data << uint8(pet->GetReactState());
-    data << uint8(charmInfo->GetCommandState());
-    data << uint16(0); // Flags, mostly unknown
 
-    // action bar loop
-    charmInfo->BuildActionBar(&data);
+    data.WriteBit(guid[7]);
+    data.WriteBit(guid[4]);
+    data.WriteBits(spellHistoryCount, 21);                  // NIY
+    data.WriteBits(unkCount, 22);                           // NYI
+    data.WriteBit(guid[2]);
+    data.WriteBits(cooldownCount, 20);                      // CooldownCount Placeholder
+    data.WriteBit(guid[5]);
+    data.WriteBit(guid[3]);
+    data.WriteBit(guid[6]);
+    data.WriteBit(guid[0]);
+    data.WriteBit(guid[1]);
 
-    size_t spellsCountPos = data.wpos();
-
-    // spells count
-    uint8 addlist = 0;
-    data << uint8(addlist);                                 // placeholder
+    data.FlushBits();
 
     if (pet->IsPermanentPetFor(this))
     {
@@ -21348,14 +21390,9 @@ void Player::PetSpellInitialize()
                 continue;
 
             data << uint32(MAKE_UNIT_ACTION_BUTTON(itr->first, itr->second.active));
-            ++addlist;
+            //++addlist;
         }
     }
-
-    data.put<uint8>(spellsCountPos, addlist);
-
-    uint8 cooldownsCount = pet->m_CreatureSpellCooldowns.size() + pet->m_CreatureCategoryCooldowns.size();
-    data << uint8(cooldownsCount);
 
     time_t curTime = time(NULL);
 
@@ -21365,31 +21402,58 @@ void Player::PetSpellInitialize()
         if (!spellInfo)
         {
             data << uint32(0);
-            data << uint16(0);
             data << uint32(0);
+            data << uint16(0);
             data << uint32(0);
             continue;
         }
 
         time_t cooldown = (itr->second > curTime) ? (itr->second - curTime) * IN_MILLISECONDS : 0;
-        data << uint32(itr->first);                 // spell ID
-
+        
         CreatureSpellCooldowns::const_iterator categoryitr = pet->m_CreatureCategoryCooldowns.find(spellInfo->GetCategory());
         if (categoryitr != pet->m_CreatureCategoryCooldowns.end())
         {
             time_t categoryCooldown = (categoryitr->second > curTime) ? (categoryitr->second - curTime) * IN_MILLISECONDS : 0;
+            data << uint32(categoryCooldown);           // category cooldown
+            data << uint32(itr->first);                 // spell ID
             data << uint16(spellInfo->GetCategory());   // spell category
             data << uint32(cooldown);                   // spell cooldown
-            data << uint32(categoryCooldown);           // category cooldown
         }
         else
         {
             data << uint16(0);
-            data << uint32(cooldown);
             data << uint32(0);
+            data << uint32(itr->first);                 // spell ID
+            data << uint32(cooldown);
         }
     }
 
+    data.WriteByteSeq(guid[2]);
+
+    // action bar loop
+    charmInfo->BuildActionBar(&data);
+
+    data.WriteByteSeq(guid[7]);
+    data.WriteByteSeq(guid[0]);
+    data.WriteByteSeq(guid[3]);
+
+    data << uint16(pet->GetCreatureTemplate()->family); // creature family (required for pet talents)
+
+    /*for (uint32 i = 0; i < spellHistoryCount; i++)
+    {
+        data << uint32(recoveryTime);
+        data << uint8(consumedCharges);
+        data << uint32(categoryID);
+    }*/
+
+    data << uint16(0);                                  // Specialization (TODO)
+    data.WriteByteSeq(guid[1]);
+    data.WriteByteSeq(guid[4]);
+    data.WriteByteSeq(guid[6]);
+    data << uint32(pet->GetDuration());                 // guessed
+    data.WriteByteSeq(guid[5]);
+    data << uint32(0);                                  // PetModeAndOrders (flags)
+    
     GetSession()->SendPacket(&data);
 }
 
@@ -23821,12 +23885,9 @@ void Player::SendInitialPacketsBeforeAddToMap()
 
     // Homebind
     WorldPacket data(SMSG_BINDPOINTUPDATE, 4 + 4 + 4 + 4 + 4);
-    data << m_homebindX;
-    data << m_homebindZ;
-    data << m_homebindY;
+    data << m_homebindX << m_homebindZ << m_homebindY;
     data << (uint32) m_homebindAreaId;
     data << (uint32) m_homebindMapId;
-
     GetSession()->SendPacket(&data);
 
     // SMSG_SET_PROFICIENCY

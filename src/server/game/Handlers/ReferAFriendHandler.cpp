@@ -27,9 +27,26 @@ void WorldSession::HandleGrantLevel(WorldPacket& recvData)
 {
     TC_LOG_DEBUG("network", "WORLD: CMSG_GRANT_LEVEL");
 
-    uint64 guid;
-    recvData.readPackGUID(guid);
+    ObjectGuid guid;
 
+    guid[2] = recvData.ReadBit();  // 18
+    guid[1] = recvData.ReadBit();  // 17
+    guid[5] = recvData.ReadBit();  // 21
+    guid[3] = recvData.ReadBit();  // 19
+    guid[7] = recvData.ReadBit();  // 23
+    guid[4] = recvData.ReadBit();  // 20
+    guid[0] = recvData.ReadBit();  // 16
+    guid[6] = recvData.ReadBit();  // 22
+
+    recvData.ReadByteSeq(guid[1]);  // 17
+    recvData.ReadByteSeq(guid[4]);  // 20
+    recvData.ReadByteSeq(guid[2]);  // 18
+    recvData.ReadByteSeq(guid[7]);  // 23
+    recvData.ReadByteSeq(guid[5]);  // 21
+    recvData.ReadByteSeq(guid[3]);  // 19
+    recvData.ReadByteSeq(guid[6]);  // 22
+    recvData.ReadByteSeq(guid[0]);  // 16
+    
     Player* target = ObjectAccessor::GetObjectInWorld(guid, _player);
 
     // check cheating
@@ -61,8 +78,29 @@ void WorldSession::HandleGrantLevel(WorldPacket& recvData)
         return;
     }
 
+    
+    ObjectGuid oGUID = _player->GetGUID();
+
     WorldPacket data2(SMSG_PROPOSE_LEVEL_GRANT, 8);
-    data2.append(_player->GetPackGUID());
+    
+    data2.WriteBit(oGUID[6]);  // 22
+    data2.WriteBit(oGUID[7]);  // 23
+    data2.WriteBit(oGUID[2]);  // 18
+    data2.WriteBit(oGUID[5]);  // 21
+    data2.WriteBit(oGUID[3]);  // 19
+    data2.WriteBit(oGUID[0]);  // 16
+    data2.WriteBit(oGUID[1]);  // 17
+    data2.WriteBit(oGUID[4]);  // 20
+
+    data2.WriteByteSeq(oGUID[2]);  // 18
+    data2.WriteByteSeq(oGUID[5]);  // 21
+    data2.WriteByteSeq(oGUID[6]);  // 22
+    data2.WriteByteSeq(oGUID[7]);  // 23
+    data2.WriteByteSeq(oGUID[1]);  // 17
+    data2.WriteByteSeq(oGUID[4]);  // 20
+    data2.WriteByteSeq(oGUID[3]);  // 19
+    data2.WriteByteSeq(oGUID[0]);  // 16
+    
     target->GetSession()->SendPacket(&data2);
 }
 

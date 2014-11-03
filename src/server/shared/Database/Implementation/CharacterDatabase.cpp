@@ -639,11 +639,17 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_DEL_CHAR_PET_BY_ID, "DELETE FROM character_pet WHERE id = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_DEL_CHAR_PET_BY_SLOT, "DELETE FROM character_pet WHERE owner = ? AND (slot = ? OR slot > ?)", CONNECTION_ASYNC);
 
-    // battle Pet
+    // Battle Pet
     PrepareStatement(CHAR_SEL_ACCOUNT_BATTLE_PETS, "SELECT id, species, nickname, timestamp, level, xp, health, maxHealth, power, speed, quality, breed, flags FROM account_battle_pet WHERE accountId = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_DEL_ACCOUNT_BATTLE_PET, "DELETE FROM account_battle_pet WHERE id = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_INS_ACCOUNT_BATTLE_PET, "INSERT INTO account_battle_pet (id, accountId, species, nickname, timestamp, level, xp, health, maxHealth, power, speed, quality, breed, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(CHAR_SEL_ACCOUNT_BATTLE_PET_SLOTS, "SELECT slot1, slot2, slot3, flags FROM account_battle_pet_slots WHERE accountId = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_DEL_ACCOUNT_BATTLE_PET_SLOTS, "DELETE FROM account_battle_pet_slots WHERE accountId = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_INS_ACCOUNT_BATTLE_PET_SLOTS, "INSERT INTO account_battle_pet_slots (accountId, slot1, slot2, slot3, flags) VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+
+    // Black Market
+    PrepareStatement(CHAR_SEL_BLACK_MARKET_AUCTIONS, "SELECT Id, TemplateId, StartTime, CurrentBidder, CurrentBid, MinIncrement, NumBids FROM black_market", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_INS_BLACK_MARKET_AUCTION, "INSERT INTO black_market (Id, TemplateId, StartTime, CurrentBidder, CurrentBid, MinIncrement, NumBids) VALUES (?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_DEL_BLACK_MARKET_AUCTION, "DELETE FROM black_market WHERE Id = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_UPD_BLACK_MARKET_AUCTION, "UPDATE black_market SET CurrentBidder = ?, CurrentBid = ?, MinIncrement = ?, NumBids = ? WHERE Id = ?", CONNECTION_ASYNC);
 }

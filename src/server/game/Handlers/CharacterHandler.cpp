@@ -992,8 +992,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
             stringBuffer.WriteString(string);
             ++linecount;
         }
-
-
+        
         data.PutBits(0, linecount, 4);
         data.FlushBits();
         data.append(stringBuffer);
@@ -1297,7 +1296,10 @@ void WorldSession::HandleSetFactionInactiveOpcode(WorldPacket& recvData)
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_SET_FACTION_INACTIVE");
     uint32 replistid;
     uint8 inactive;
-    recvData >> replistid >> inactive;
+
+    recvData >> replistid;
+
+    inactive = recvData.ReadBit();
 
     _player->GetReputationMgr().SetInactive(replistid, inactive);
 }

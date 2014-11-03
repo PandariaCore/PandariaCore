@@ -878,8 +878,8 @@ void LootView::WriteData(ObjectGuid guid, LootType lootType, WorldPacket* data)
 
     if (permission == NONE_PERMISSION)
     {
-        data->WriteBit(1); // Missing unk8
-        data->WriteBit(0); // lootType present
+        data->WriteBit(1);              // Missing unk8
+        data->WriteBit(0);              // lootType present
         data->WriteBit(guid[4]);
         data->WriteBits(0, 20);
         data->WriteBit(lootGuid[2]);
@@ -889,9 +889,9 @@ void LootView::WriteData(ObjectGuid guid, LootType lootType, WorldPacket* data)
         data->WriteBit(guid[6]);
         data->WriteBit(guid[7]);
         data->WriteBit(1);
-        data->WriteBit(1); // isPersonalLooting
-        data->WriteBit(1); // Missing unk8
-        data->WriteBit(0); // isAoELooting
+        data->WriteBit(1);              // isPersonalLooting
+        data->WriteBit(1);              // Missing unk8
+        data->WriteBit(0);              // isAoELooting
         data->WriteBit(guid[5]);
         data->WriteBit(lootGuid[6]);
         data->WriteBits(0, 19);
@@ -901,7 +901,7 @@ void LootView::WriteData(ObjectGuid guid, LootType lootType, WorldPacket* data)
         data->WriteBit(lootGuid[5]);
         data->WriteBit(guid[3]);
         data->WriteBit(lootGuid[4]);
-        data->WriteBit(1); // Missing unk8
+        data->WriteBit(1);              // Missing unk8
         data->WriteBit(guid[2]);
         data->FlushBits();
         data->WriteByteSeq(lootGuid[2]);

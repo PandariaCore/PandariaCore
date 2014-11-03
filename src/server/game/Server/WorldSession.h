@@ -138,9 +138,9 @@ enum BarberShopResult
     /*BARBER_SHOP_NOT_ENOUGH_MONEY = 3*/
 };
 
-#define DB2_REPLY_BROADCAST 35137211
-#define DB2_REPLY_SPARSE    2442913102
-#define DB2_REPLY_ITEM      1344507586
+#define DB2_REPLY_BROADCAST             35137211
+#define DB2_REPLY_SPARSE                2442913102
+#define DB2_REPLY_ITEM                  1344507586
 
 //class to deal with packet processing
 //allows to determine if next packet is safe to be processed
@@ -423,7 +423,10 @@ class WorldSession
         void HandleMoveUnRootAck(WorldPacket& recvPacket);
         void HandleMoveRootAck(WorldPacket& recvPacket);
         void HandleLookingForGroup(WorldPacket& recvPacket);
+
+        // cemetery/graveyard related
         void HandleReturnToGraveyard(WorldPacket& recvPacket);
+        void HandleRequestCemeteryList(WorldPacket& recvPacket);
 
         // new inspect
         void HandleInspectOpcode(WorldPacket& recvPacket);
@@ -515,6 +518,8 @@ class WorldSession
         void HandleCreatureQueryOpcode(WorldPacket& recvPacket);
 
         void HandleGameObjectQueryOpcode(WorldPacket& recvPacket);
+
+        void HandleDBQueryBulk(WorldPacket& recvPacket);
 
         void HandleMoveWorldportAckOpcode(WorldPacket& recvPacket);
         void HandleMoveWorldportAckOpcode();                // for server-side calls
@@ -777,6 +782,7 @@ class WorldSession
         void HandlePetCancelAuraOpcode(WorldPacket& recvPacket);
         void HandlePetSpellAutocastOpcode(WorldPacket& recvPacket);
         void HandlePetCastSpellOpcode(WorldPacket& recvPacket);
+        void HandeLearnPetSpecializationGroup(WorldPacket& recvData);
         void HandlePetLearnTalent(WorldPacket& recvPacket);
         void HandleLearnPreviewTalentsPet(WorldPacket& recvPacket);
 
@@ -949,14 +955,6 @@ class WorldSession
         void HandleReforgeItemOpcode(WorldPacket& recvData);
         void SendReforgeResult(bool success);
 
-        // BlackMarket
-        void HandleBlackMarketHelloOpcode(WorldPacket& recvData);
-        void SendBlackMarketHello(uint64 guid);
-        void HandleBlackMarketRequestItemOpcode(WorldPacket& recvData);
-        void SendBlackMarketRequestItemsResult();
-        void HandleBlackMarketBidOpcode(WorldPacket& recvData);
-        void SendBlackMarketBidResult();
-
         // Miscellaneous
         void HandleSpellClick(WorldPacket& recvData);
         void HandleMirrorImageDataRequest(WorldPacket& recvData);
@@ -976,15 +974,12 @@ class WorldSession
         void HandleEjectPassenger(WorldPacket& data);
         void HandleEnterPlayerVehicle(WorldPacket& data);
         void HandleUpdateProjectilePosition(WorldPacket& recvPacket);
-        void HandleRequestHotfix(WorldPacket& recvPacket);
         void HandleUpdateMissileTrajectory(WorldPacket& recvPacket);
         void HandleViolenceLevel(WorldPacket& recvPacket);
         void HandleObjectUpdateFailedOpcode(WorldPacket& recvPacket);
         void HandleSelectFactionOpcode(WorldPacket& recvPacket);
         void HandleRequestCategoryCooldowns(WorldPacket& recvPacket);
-
-        void SendBroadcastText(uint32 entry);
-
+        
         int32 HandleEnableNagleAlgorithm();
 
         // Compact Unit Frames (4.x)
@@ -998,6 +993,14 @@ class WorldSession
         void HandleBattlePetSetBattleSlot(WorldPacket& recvData);
         void HandleBattlePetSetFlags(WorldPacket& recvData);
         void HandleBattlePetSummonCompanion(WorldPacket& recvData);
+
+        // BlackMarket
+        void HandleBlackMarketOpen(WorldPacket& recvData);
+        void SendBlackMarketOpenResult(uint64 guid);
+        void HandleBlackMarketRequestItems(WorldPacket& recvData);
+        void SendBlackMarketRequestItemsResult();
+        void HandleBlackMarketBid(WorldPacket& recvData);
+        void SendBlackMarketBidOnItemResult(uint32 itemEntry);
 
     private:
         void InitializeQueryCallbackParameters();

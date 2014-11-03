@@ -3945,24 +3945,24 @@ void Spell::SendSpellStart()
 
     WorldPacket data(SMSG_SPELL_START, 25);
 
-    data.WriteBits(0, 24); // Miss Count (not used currently in SMSG_SPELL_START)
+    data.WriteBits(0, 24);                      // Miss Count (not used currently in SMSG_SPELL_START)
     data.WriteBit(casterGuid[5]);
 
     //for (uint32 i = 0; i < missCount; ++i)
     //{
     //}
 
-    data.WriteBit(1); // Unk read int8
-    data.WriteBit(0); // Fake Bit
+    data.WriteBit(1);                           // hasSplineElevation
+    data.WriteBit(0);                           // Fake Bit
     data.WriteBit(casterUnitGuid[4]);
     data.WriteBit(casterGuid[2]);
     data.WriteBits(runeCooldownPassedCount, 3); // Rune Cooldown Passed Count
     data.WriteBit(casterUnitGuid[2]);
     data.WriteBit(casterUnitGuid[6]);
-    data.WriteBits(0, 25); // MissType Count (not used currently in SMSG_SPELL_START)
-    data.WriteBits(0, 13); // Unknown Bits
+    data.WriteBits(0, 25);                      // MissType Count (not used currently in SMSG_SPELL_START)
+    data.WriteBits(0, 13);                      // Unknown Bits
     data.WriteBit(casterGuid[4]);
-    data.WriteBits(0, 24); // Hit Count (not used currently in SMSG_SPELL_START)
+    data.WriteBits(0, 24);                      // Hit Count (not used currently in SMSG_SPELL_START)
     data.WriteBit(casterUnitGuid[7]);
 
     //for (uint32 i = 0; i < hitCount; ++i)
@@ -3985,7 +3985,7 @@ void Spell::SendSpellStart()
     data.WriteBit(!hasTargetString);
     data.WriteBit(!hasAmmoInventoryType);
     data.WriteBit(hasDestLocation);
-    data.WriteBit(1); // Unk Read32
+    data.WriteBit(1);                           // hasDelayTime
     data.WriteBit(casterGuid[3]);
 
     if (hasDestLocation)
@@ -4035,10 +4035,10 @@ void Spell::SendSpellStart()
 
     data.WriteBit(casterGuid[1]);
     data.WriteBit(!hasPredictedHeal);
-    data.WriteBit(1); // Unk read int8
+    data.WriteBit(1);                                   // hasRunesStateBefore
     data.WriteBit(!hasCastSchoolImmunities);
     data.WriteBit(casterUnitGuid[5]);
-    data.WriteBit(0); // Fake Bit
+    data.WriteBit(0);                                   // Fake Bit
     data.WriteBits(0, 20); // Extra Target Count (not used currently in SMSG_SPELL_START)
 
     //for (uint32 i = 0; i < extraTargetCount; ++i)
@@ -4056,7 +4056,7 @@ void Spell::SendSpellStart()
 
     data.WriteBit(casterGuid[0]);
     data.WriteBit(casterUnitGuid[3]);
-    data.WriteBit(1); // Unk uint8
+    data.WriteBit(1);                                   // hasRunesStateAfter
 
     if (hasTargetString)
         data.WriteBits(uint32(m_targets.GetTargetString().length()), 7);

@@ -84,6 +84,7 @@
 #include "BattlefieldMgr.h"
 #include "TransportMgr.h"
 #include "BattlePetMgr.h"
+#include "BlackMarketMgr.h"
 
 ACE_Atomic_Op<ACE_Thread_Mutex, bool> World::m_stopEvent = false;
 uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
@@ -1105,6 +1106,11 @@ void World::LoadConfigSettings(bool reload)
         m_int_configs[CONFIG_BATTLE_PET_INITIAL_LEVEL] = 1;
     }
 
+    m_int_configs[CONFIG_BLACK_MARKET_OPEN] = sConfigMgr->GetIntDefault("BlackMarket.Open", 1);
+    m_int_configs[CONFIG_BLACK_MARKET_MAX_AUCTIONS] = sConfigMgr->GetIntDefault("BlackMarket.MaxAuctions", 12);
+    m_int_configs[CONFIG_BLACK_MARKET_AUCTION_DELAY] = sConfigMgr->GetIntDefault("BlackMarket.AuctionDelay", 120);
+    m_int_configs[CONFIG_BLACK_MARKET_AUCTION_DELAY_MOD] = sConfigMgr->GetIntDefault("BlackMarket.AuctionDelayMod", 60);
+
     //visibility on continents
     m_MaxVisibleDistanceOnContinents = sConfigMgr->GetFloatDefault("Visibility.Distance.Continents", DEFAULT_VISIBILITY_DISTANCE);
     if (m_MaxVisibleDistanceOnContinents < 45*sWorld->getRate(RATE_CREATURE_AGGRO))
@@ -1417,6 +1423,10 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading instances...");
     sInstanceSaveMgr->LoadInstances();
 
+    TC_LOG_INFO("server.loading", "Loading Broadcast texts...");
+    sObjectMgr->LoadBroadcastTexts();
+    sObjectMgr->LoadBroadcastTextLocales();
+
     TC_LOG_INFO("server.loading", "Loading Localization strings...");
     uint32 oldMSTime = getMSTime();
     sObjectMgr->LoadCreatureLocales();
@@ -1688,6 +1698,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Auctions...");
     sAuctionMgr->LoadAuctions();
 
+    TC_LOG_INFO("server.loading", "Loading BlackMarket Auctions...");
+    sBlackMarketMgr->LoadFromDB();
+
     TC_LOG_INFO("server.loading", "Loading Guild XP for level...");
     sGuildMgr->LoadGuildXpForLevel();
 
@@ -1836,6 +1849,8 @@ void World::SetInitialWorldSettings()
     m_timers[WUPDATE_PINGDB].SetInterval(getIntConfig(CONFIG_DB_PING_INTERVAL)*MINUTE*IN_MILLISECONDS);    // Mysql ping time in minutes
 
     m_timers[WUPDATE_GUILDSAVE].SetInterval(getIntConfig(CONFIG_GUILD_SAVE_INTERVAL) * MINUTE * IN_MILLISECONDS);
+
+    m_timers[WUPDATE_BLACK_MARKET].SetInterval(MINUTE*IN_MILLISECONDS);
 
     //to set mailtimer to return mails every day between 4 and 5 am
     //mailtimer is increased when updating auctions
@@ -2179,6 +2194,13 @@ void World::Update(uint32 diff)
     {
         m_timers[WUPDATE_GUILDSAVE].Reset();
         sGuildMgr->SaveGuilds();
+    }
+
+    // Update BlackMarket
+    if (m_timers[WUPDATE_BLACK_MARKET].Passed())
+    {
+        m_timers[WUPDATE_BLACK_MARKET].Reset();
+        sBlackMarketMgr->Update();
     }
 
     // update the instance reset times

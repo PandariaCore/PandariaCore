@@ -36,17 +36,34 @@
 
 void WorldSession::HandleDismissCritter(WorldPacket& recvData)
 {
-    uint64 guid;
-    recvData >> guid;
+    ObjectGuid guid;
 
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_DISMISS_CRITTER for GUID " UI64FMTD, guid);
+    guid[4] = recvData.ReadBit();  // 20
+    guid[6] = recvData.ReadBit();  // 22
+    guid[7] = recvData.ReadBit();  // 23
+    guid[5] = recvData.ReadBit();  // 21
+    guid[1] = recvData.ReadBit();  // 17
+    guid[0] = recvData.ReadBit();  // 16
+    guid[2] = recvData.ReadBit();  // 18
+    guid[3] = recvData.ReadBit();  // 19
 
-    Unit* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
+    recvData.ReadByteSeq(guid[2]);  // 18
+    recvData.ReadByteSeq(guid[4]);  // 20
+    recvData.ReadByteSeq(guid[5]);  // 21
+    recvData.ReadByteSeq(guid[0]);  // 16
+    recvData.ReadByteSeq(guid[1]);  // 17
+    recvData.ReadByteSeq(guid[7]);  // 23
+    recvData.ReadByteSeq(guid[3]);  // 19
+    recvData.ReadByteSeq(guid[6]);  // 22
+    
+    TC_LOG_DEBUG("network", "WORLD: Received CMSG_DISMISS_CRITTER for GUID " UI64FMTD, uint64(guid));
+
+    Unit* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, uint64(guid));
 
     if (!pet)
     {
         TC_LOG_DEBUG("network", "Vanitypet (guid: %u) does not exist - player '%s' (guid: %u / account: %u) attempted to dismiss it (possibly lagged out)",
-            uint32(GUID_LOPART(guid)), GetPlayer()->GetName().c_str(), GetPlayer()->GetGUIDLow(), GetAccountId());
+            uint32(GUID_LOPART(uint64(guid))), GetPlayer()->GetName().c_str(), GetPlayer()->GetGUIDLow(), GetAccountId());
         return;
     }
 
@@ -154,23 +171,40 @@ void WorldSession::HandlePetAction(WorldPacket& recvData) //  sub_68C8FD [5.4.8 
 
 void WorldSession::HandlePetStopAttack(WorldPacket &recvData)
 {
-    uint64 guid;
-    recvData >> guid;
+    ObjectGuid guid;
 
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_PET_STOP_ATTACK for GUID " UI64FMTD "", guid);
+    guid[7] = recvData.ReadBit();  // 23
+    guid[5] = recvData.ReadBit();  // 21
+    guid[1] = recvData.ReadBit();  // 17
+    guid[6] = recvData.ReadBit();  // 22
+    guid[0] = recvData.ReadBit();  // 16
+    guid[2] = recvData.ReadBit();  // 18
+    guid[4] = recvData.ReadBit();  // 20
+    guid[3] = recvData.ReadBit();  // 19
 
-    Unit* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, guid);
+    recvData.ReadByteSeq(guid[2]);  // 18
+    recvData.ReadByteSeq(guid[5]);  // 21
+    recvData.ReadByteSeq(guid[0]);  // 16
+    recvData.ReadByteSeq(guid[4]);  // 20
+    recvData.ReadByteSeq(guid[1]);  // 17
+    recvData.ReadByteSeq(guid[7]);  // 23
+    recvData.ReadByteSeq(guid[6]);  // 22
+    recvData.ReadByteSeq(guid[3]);  // 19
+
+    TC_LOG_DEBUG("network", "WORLD: Received CMSG_PET_STOP_ATTACK for GUID " UI64FMTD "", uint64(guid));
+
+    Unit* pet = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, uint64(guid));
 
     if (!pet)
     {
-        TC_LOG_ERROR("network", "HandlePetStopAttack: Pet %u does not exist", uint32(GUID_LOPART(guid)));
+        TC_LOG_ERROR("network", "HandlePetStopAttack: Pet %u does not exist", uint32(GUID_LOPART(uint64(guid))));
         return;
     }
 
     if (pet != GetPlayer()->GetPet() && pet != GetPlayer()->GetCharm())
     {
         TC_LOG_ERROR("network", "HandlePetStopAttack: Pet GUID %u isn't a pet or charmed creature of player %s",
-            uint32(GUID_LOPART(guid)), GetPlayer()->GetName().c_str());
+            uint32(GUID_LOPART(uint64(guid))), GetPlayer()->GetName().c_str());
         return;
     }
 

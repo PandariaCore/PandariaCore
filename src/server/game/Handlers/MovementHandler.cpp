@@ -511,23 +511,25 @@ void WorldSession::HandleSetActiveMoverOpcode(WorldPacket& recvPacket)
 
     ObjectGuid guid;
 
-    guid[7] = recvPacket.ReadBit();
+    recvPacket.ReadBit();
+
+    guid[3] = recvPacket.ReadBit();
+    guid[0] = recvPacket.ReadBit();
     guid[2] = recvPacket.ReadBit();
     guid[1] = recvPacket.ReadBit();
-    guid[0] = recvPacket.ReadBit();
-    guid[4] = recvPacket.ReadBit();
     guid[5] = recvPacket.ReadBit();
+    guid[4] = recvPacket.ReadBit();
+    guid[7] = recvPacket.ReadBit();
     guid[6] = recvPacket.ReadBit();
-    guid[3] = recvPacket.ReadBit();
 
     recvPacket.ReadByteSeq(guid[3]);
-    recvPacket.ReadByteSeq(guid[2]);
     recvPacket.ReadByteSeq(guid[4]);
-    recvPacket.ReadByteSeq(guid[0]);
     recvPacket.ReadByteSeq(guid[5]);
+    recvPacket.ReadByteSeq(guid[2]);
+    recvPacket.ReadByteSeq(guid[7]);
+    recvPacket.ReadByteSeq(guid[0]);
     recvPacket.ReadByteSeq(guid[1]);
     recvPacket.ReadByteSeq(guid[6]);
-    recvPacket.ReadByteSeq(guid[7]);
 
     if (GetPlayer()->IsInWorld())
     {
@@ -617,10 +619,27 @@ void WorldSession::HandleSummonResponseOpcode(WorldPacket& recvData)
     if (!_player->IsAlive() || _player->IsInCombat())
         return;
 
-    uint64 summonerGuid;
+    ObjectGuid summonerGuid;
     bool agree;
-    recvData >> summonerGuid;
-    recvData >> agree;
+
+    summonerGuid[1] = recvData.ReadBit();  // 17
+    summonerGuid[3] = recvData.ReadBit();  // 19
+    summonerGuid[5] = recvData.ReadBit();  // 21
+    summonerGuid[2] = recvData.ReadBit();  // 18
+    agree = recvData.ReadBit();            // 24
+    summonerGuid[7] = recvData.ReadBit();  // 23
+    summonerGuid[0] = recvData.ReadBit();  // 16
+    summonerGuid[4] = recvData.ReadBit();  // 20
+    summonerGuid[6] = recvData.ReadBit();  // 22
+
+    recvData.ReadByteSeq(summonerGuid[0]);  // 16
+    recvData.ReadByteSeq(summonerGuid[1]);  // 17
+    recvData.ReadByteSeq(summonerGuid[6]);  // 22
+    recvData.ReadByteSeq(summonerGuid[3]);  // 19
+    recvData.ReadByteSeq(summonerGuid[5]);  // 21
+    recvData.ReadByteSeq(summonerGuid[4]);  // 20
+    recvData.ReadByteSeq(summonerGuid[2]);  // 18
+    recvData.ReadByteSeq(summonerGuid[7]);  // 23
 
     _player->SummonIfPossible(agree);
 }

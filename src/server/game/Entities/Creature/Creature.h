@@ -76,13 +76,14 @@ enum CreatureFlagsExtra
 struct CreatureTemplate
 {
     uint32  Entry;
-    uint32  DifficultyEntry[MAX_DIFFICULTY - 1];
+    uint32  DifficultyEntry[2]; //MAX_DIFFICULTY - 1];
     uint32  KillCredit[MAX_KILL_CREDIT];
     uint32  Modelid1;
     uint32  Modelid2;
     uint32  Modelid3;
     uint32  Modelid4;
     std::string  Name;
+    std::string  FemaleName;
     std::string  SubName;
     std::string  IconName;
     uint32  GossipMenuId;
@@ -90,8 +91,7 @@ struct CreatureTemplate
     uint8   maxlevel;
     uint32  expansion;
     uint32  expansionUnknown;                               // either 0 or 3, sent to the client / wdb
-    uint32  faction_A;
-    uint32  faction_H;
+    uint32  faction;
     uint32  npcflag;
     float   speed_walk;
     float   speed_run;

@@ -86,6 +86,14 @@ class Pet : public Guardian
         void SetDuration(int32 dur) { m_duration = dur; }
         int32 GetDuration() const { return m_duration; }
 
+        uint8 GetActiveSpecialization() const { return _activeSpecialization; }
+        void SetActiveSpecialization(uint8 spec){ _activeSpecialization = spec; }
+        uint8 GetSpecializationCount() const { return _specializationCount; }
+        void SetSpecializationCount(uint8 count) { _specializationCount = count; }
+        void SetSpecialization(uint8 specIdx, uint32 specGroup);
+        uint32 GetSpecialization(uint8 specIdx) { return _specializations[specIdx]; }
+        void SendPetSpecialization();
+
         /*
         bool UpdateStats(Stats stat);
         bool UpdateAllStats();
@@ -157,6 +165,10 @@ class Pet : public Guardian
         DeclinedName *m_declinedname;
 
     private:
+        uint8 _specializationCount;
+        uint8 _activeSpecialization;
+        uint32 _specializations[MAX_TALENT_SPECS];
+
         void SaveToDB(uint32, uint8, uint32)                // override of Creature::SaveToDB     - must not be called
         {
             ASSERT(false);

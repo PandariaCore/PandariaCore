@@ -39,7 +39,7 @@
 Pet::Pet(Player* owner, PetType type) :
     Guardian(NULL, owner, true), m_usedTalentCount(0), m_removed(false),
     m_petType(type), m_duration(0), m_auraRaidUpdateMask(0), m_loading(false),
-    m_declinedname(NULL)
+    m_declinedname(NULL), _specializationCount(1), _activeSpecialization(0)
 {
     ASSERT(m_owner->GetTypeId() == TYPEID_PLAYER);
 
@@ -55,6 +55,9 @@ Pet::Pet(Player* owner, PetType type) :
 
     m_name = "Pet";
     m_regenTimer = PET_FOCUS_REGEN_INTERVAL;
+
+    for (uint8 i = 0; i < MAX_TALENT_SPECS; ++i)
+        _specializations[i] = 0;
 }
 
 Pet::~Pet()
@@ -304,7 +307,31 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
     owner->SetMinion(this, true);
     map->AddToMap(this->ToCreature());
 
-    InitTalentForLevel();                                   // set original talents points before spell loading
+    // Load pet specializations
+    if (getPetType() == HUNTER_PET)
+    {
+        SetSpecializationCount(fields[17].GetUInt8());
+        SetActiveSpecialization(fields[18].GetUInt8());
+
+        // sanity check
+        if (GetSpecializationCount() > MAX_TALENT_SPECS || GetActiveSpecialization() > MAX_TALENT_SPEC || GetSpecializationCount() < MIN_TALENT_SPECS)
+        {
+            SetSpecializationCount(0);
+            TC_LOG_ERROR("entities.pet", "Pet (GUID: %u / Owner: %s - GUID: %u) has SpecCount = %u and ActiveSpec = %u.", GetGUIDLow(), GetOwner()->GetName().c_str(), GetOwner()->GetGUIDLow(), GetSpecializationCount(), GetActiveSpecialization());
+        }
+
+        // Only load selected specializations
+        Tokenizer specializations(fields[16].GetString(), ' ', MAX_TALENT_SPECS);
+        for (uint8 i = 0; i < MAX_TALENT_SPECS; ++i)
+        {
+            if (i >= specializations.size())
+                break;
+
+            uint32 specialization = atol(specializations[i]);
+            if (sChrSpecializationStore.LookupEntry(specialization)) // Perhaps need to check the current spec is really a pet spec -> ClassId == 0 && (ID == 74 || ID == 79 || ID == 81)
+                _specializations[i] = specialization;
+        }
+    }
 
     uint32 timediff = uint32(time(NULL) - fields[13].GetUInt32());
     _LoadAuras(timediff);
@@ -315,7 +342,6 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
         m_charmInfo->LoadPetActionBar(fields[12].GetString());
 
         _LoadSpells();
-        InitTalentForLevel();                               // re-init to check talent count
         _LoadSpellCooldowns();
         LearnPetPassives();
         InitLevelupSpellsForLevel();
@@ -333,6 +359,8 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
 
     if (getPetType() == HUNTER_PET)
     {
+        SendPetSpecialization();
+
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PET_DECLINED_NAME);
         stmt->setUInt32(0, owner->GetGUIDLow());
         stmt->setUInt32(1, GetCharmInfo()->GetPetNumber());
@@ -437,34 +465,52 @@ void Pet::SavePetToDB(PetSaveMode mode)
         }
 
         // save pet
-        std::ostringstream ss;
-        ss  << "INSERT INTO character_pet (id, entry,  owner, modelid, level, exp, Reactstate, slot, name, renamed, curhealth, curmana, abdata, savetime, CreatedBySpell, PetType) "
-            << "VALUES ("
-            << m_charmInfo->GetPetNumber() << ','
-            << GetEntry() << ','
-            << ownerLowGUID << ','
-            << GetNativeDisplayId() << ','
-            << uint32(getLevel()) << ','
-            << GetUInt32Value(UNIT_FIELD_PET_EXPERIENCE) << ','
-            << uint32(GetReactState()) << ','
-            << uint32(mode) << ", '"
-            << name.c_str() << "', "
-            << uint32(HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 2, UNIT_CAN_BE_RENAMED) ? 0 : 1) << ','
-            << curhealth << ','
-            << curmana << ", '";
+        uint8 index = 0;
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_PET);
+        stmt->setUInt32(index++, m_charmInfo->GetPetNumber());
+        stmt->setUInt32(index++, GetEntry());
+        stmt->setUInt32(index++, ownerLowGUID);
+        stmt->setUInt32(index++, GetNativeDisplayId());
+        stmt->setUInt32(index++, uint32(getLevel()));
+        stmt->setUInt32(index++, GetUInt32Value(UNIT_FIELD_PET_EXPERIENCE));
+        stmt->setUInt32(index++, uint32(GetReactState()));
+        stmt->setUInt32(index++, uint32(mode));
+        stmt->setString(index++, name.c_str());
+        stmt->setUInt32(index++, uint32(HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 2, UNIT_CAN_BE_RENAMED) ? 0 : 1));
+        stmt->setUInt32(index++, curhealth);
+        stmt->setUInt32(index++, curmana);
 
+        std::ostringstream ss;
         for (uint32 i = ACTION_BAR_INDEX_START; i < ACTION_BAR_INDEX_END; ++i)
         {
             ss << uint32(m_charmInfo->GetActionBarEntry(i)->GetType()) << ' '
-               << uint32(m_charmInfo->GetActionBarEntry(i)->GetAction()) << ' ';
+                << uint32(m_charmInfo->GetActionBarEntry(i)->GetAction()) << ' ';
         };
+        stmt->setString(index++, ss.str());
 
-        ss  << "', "
-            << time(NULL) << ','
-            << GetUInt32Value(UNIT_FIELD_CREATED_BY_SPELL) << ','
-            << uint32(getPetType()) << ')';
+        stmt->setUInt32(index++, time(NULL));
+        stmt->setUInt32(index++, GetUInt32Value(UNIT_FIELD_CREATED_BY_SPELL));
+        stmt->setUInt32(index++, uint32(getPetType()));
 
-        trans->Append(ss.str().c_str());
+        trans->Append(stmt);
+
+        // Save specialization info
+        if (getPetType() == HUNTER_PET)
+        {
+            index = 0;
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_PET_SPECIALIZATION);
+
+            ss.str("");
+            for (uint8 i = 0; i < MAX_TALENT_SPECS; ++i)
+                ss << GetSpecialization(i) << " ";
+            stmt->setString(index++, ss.str());
+
+            stmt->setUInt8(index++, GetSpecializationCount());
+            stmt->setUInt8(index++, GetActiveSpecialization());
+
+            trans->Append(stmt);
+        }
+
         CharacterDatabase.CommitTransaction(trans);
     }
     // delete
@@ -1619,6 +1665,21 @@ void Pet::InitPetCreateSpells()
 
     CastPetAuras(false);
 }
+
+void Pet::SetSpecialization(uint8 specIdx, uint32 specGroup)
+{
+    _specializations[specIdx] = specGroup;
+};
+
+void Pet::SendPetSpecialization()
+{
+    WorldPacket data(SMSG_SET_PET_SPECIALIZATION, 4);
+
+    data << uint16(GetSpecialization(GetActiveSpecialization()));
+
+    if (Player* owner = GetOwner())
+        owner->GetSession()->SendPacket(&data);
+};
 
 bool Pet::resetTalents()
 {/*

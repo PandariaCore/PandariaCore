@@ -212,22 +212,6 @@ public:
         std::string targetName;
         if (!handler->extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
         {
-            // Try reset talents as Hunter Pet
-            Creature* creature = handler->getSelectedCreature();
-            if (!*args && creature && creature->IsPet())
-            {
-                Unit* owner = creature->GetOwner();
-                if (owner && owner->GetTypeId() == TYPEID_PLAYER && creature->ToPet()->IsPermanentPetFor(owner->ToPlayer()))
-                {
-                    creature->ToPet()->resetTalents();
-
-                    ChatHandler(owner->ToPlayer()->GetSession()).SendSysMessage(LANG_RESET_PET_TALENTS);
-                    if (!handler->GetSession() || handler->GetSession()->GetPlayer() != owner->ToPlayer())
-                        handler->PSendSysMessage(LANG_RESET_PET_TALENTS_ONLINE, handler->GetNameLink(owner->ToPlayer()).c_str());
-                }
-                return true;
-            }
-
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
             return false;

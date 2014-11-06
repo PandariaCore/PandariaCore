@@ -980,7 +980,7 @@ void WorldSession::SendPetNameInvalid(uint32 error, const std::string& name, Dec
 
 void WorldSession::HandeLearnPetSpecializationGroup(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "CMSG_LEARN_PET_SPECIALIZATION_GROUP received");
+    TC_LOG_DEBUG("network", "CMSG_LEARN_PET_SPECIALIZATION_GROUP");
 
     uint32 specGroupIndex;
     ObjectGuid petGUID;
@@ -1005,27 +1005,55 @@ void WorldSession::HandeLearnPetSpecializationGroup(WorldPacket& recvData)
     recvData.ReadByteSeq(petGUID[6]);  // 22
     recvData.ReadByteSeq(petGUID[1]);  // 17
 
-    Unit* unit = ObjectAccessor::GetCreatureOrPetOrVehicle(*_player, petGUID);
-    if (unit)
+    if (_player->GetPet()->GetGUID() != uint64(petGUID))
     {
-        if (unit->IsPet() && unit->GetTypeId() == HUNTER_PET)
-        {
-            Pet* pet = (Pet*)unit;
-
-            if (specGroupIndex > MAX_TALENT_TABS)
-                return;
-
-            if (pet->GetSpecialization(pet->GetActiveSpecialization()))
-                return;
-
-            uint32 specializationId = GetPetSpecializations()[specGroupIndex];
-
-            pet->SetSpecialization(pet->GetActiveSpecialization(), specializationId);
-            pet->SendPetSpecialization();
-
-            // TODO: Send specialization spells
-
-            pet->SavePetToDB(PET_SAVE_AS_CURRENT);
-        }
+        TC_LOG_DEBUG("network", "HandeLearnPetSpecializationGroup: Received wrong Pet GUID (%u) from Player %s (GUID: %u)", GUID_LOPART(petGUID), _player->GetName().c_str(), _player->GetGUID());
+        return;
     }
+
+    Pet* pet = _player->GetPet();
+    if (!pet)
+        return;
+
+    if (_player->IsInCombat() || pet->getLevel() < 15)
+        return;
+
+    if (specGroupIndex > MAX_TALENT_TABS)
+        return;
+    
+    uint32 specId;
+    switch (specGroupIndex)
+    {
+        case 0: specId = SPEC_PET_FEROCITY; break;
+        case 1: specId = SPEC_PET_TENACITY; break;
+        case 2: specId = SPEC_PET_CUNNING;  break;
+        default: break;
+    }
+
+    if (pet->GetSpecialization() != SPEC_NONE)
+        pet->UnlearnSpecializationSpells();
+
+    TC_LOG_DEBUG("network", "HandeLearnPetSpecializationGroup: Pet GUID (%u) from Player %s (GUID: %u) wants to learn specialization %u", GUID_LOPART(petGUID), _player->GetName().c_str(), _player->GetGUID(), specId);
+
+    pet->SetSpecialization(specId);
+    pet->SendPetSpecialization();
+    pet->LearnSpecializationSpells();
+
+    SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_PET_SPECIALIZATION);
+
+    std::ostringstream ss;
+    for (uint8 i = 0; i < MAX_TALENT_SPECS; ++i)
+        ss << pet->GetSpecialization(i) << " ";
+    stmt->setString(0, ss.str());
+
+    stmt->setUInt8(1, pet->GetSpecializationCount());
+    stmt->setUInt8(2, pet->GetActiveSpecialization());
+
+    stmt->setUInt32(3, _player->GetGUIDLow());
+    stmt->setUInt32(4, pet->GetCharmInfo()->GetPetNumber());
+    trans->Append(stmt);
+
+    CharacterDatabase.CommitTransaction(trans);
 }

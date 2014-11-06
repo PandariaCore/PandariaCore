@@ -288,10 +288,8 @@ public:
                 continue;
 
             // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
-            pet->learnSpellHighRank(spellId);
+            pet->LearnSpellHighRank(spellId);
         }
-
-        pet->SetFreeTalentPoints(0);
 
         handler->SendSysMessage(LANG_COMMAND_LEARN_PET_TALENTS);
         return true;

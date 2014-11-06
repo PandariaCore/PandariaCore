@@ -43,7 +43,6 @@ public:
         static ChatCommand learnAllMyCommandTable[] =
         {
             { "class",      rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_CLASS,      false, &HandleLearnAllMyClassCommand,      "", NULL },
-            { "pettalents", rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_PETTALENTS, false, &HandleLearnAllMyPetTalentsCommand, "", NULL },
             { "spells",     rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_SPELLS,     false, &HandleLearnAllMySpellsCommand,     "", NULL },
             { "talents",    rbac::RBAC_PERM_COMMAND_LEARN_ALL_MY_TALENTS,    false, &HandleLearnAllMyTalentsCommand,    "", NULL },
             { NULL,         0,                                         false, NULL,                               "", NULL }
@@ -225,76 +224,7 @@ public:
         handler->SendSysMessage(LANG_COMMAND_LEARN_CLASS_TALENTS);
         return true;
     }
-
-    static bool HandleLearnAllMyPetTalentsCommand(ChatHandler* handler, char const* /*args*/)
-    {
-        return false;
-
-        Player* player = handler->GetSession()->GetPlayer();
-
-        Pet* pet = player->GetPet();
-        if (!pet)
-        {
-            handler->SendSysMessage(LANG_NO_PET_FOUND);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        CreatureTemplate const* creatureInfo = pet->GetCreatureTemplate();
-        if (!creatureInfo)
-        {
-            handler->SendSysMessage(LANG_WRONG_PET_TYPE);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        CreatureFamilyEntry const* petFamily = sCreatureFamilyStore.LookupEntry(creatureInfo->family);
-        if (!petFamily)
-        {
-            handler->SendSysMessage(LANG_WRONG_PET_TYPE);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        if (petFamily->petTalentType < 0)                       // not hunter pet
-        {
-            handler->SendSysMessage(LANG_WRONG_PET_TYPE);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
-        {
-            TalentEntry const* talentInfo = sTalentStore.LookupEntry(i);
-            if (!talentInfo)
-                continue;
-
-            /*TalentTabEntry const* talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
-            if (!talentTabInfo)
-                continue;
-
-            // prevent learn talent for different family (cheating)
-            if (((1 << petFamily->petTalentType) & talentTabInfo->petTalentMask) == 0)
-                continue;*/
-
-            // search highest talent rank
-            uint32 spellId = 0;
-
-            if (!spellId)                                        // ??? none spells in talent
-                continue;
-
-            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
-            if (!spellInfo || !SpellMgr::IsSpellValid(spellInfo, handler->GetSession()->GetPlayer(), false))
-                continue;
-
-            // learn highest rank of talent and learn all non-talent spell ranks (recursive by tree)
-            pet->LearnSpellHighRank(spellId);
-        }
-
-        handler->SendSysMessage(LANG_COMMAND_LEARN_PET_TALENTS);
-        return true;
-    }
-
+    
     static bool HandleLearnAllLangCommand(ChatHandler* handler, char const* /*args*/)
     {
         // skipping UNIVERSAL language (0)

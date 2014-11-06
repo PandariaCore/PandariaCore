@@ -128,9 +128,10 @@ class Pet : public Guardian
         void _SaveSpells(SQLTransaction& trans);
 
         bool AddSpell(uint32 spellId, ActiveStates active = ACT_DECIDE, PetSpellState state = PETSPELL_NEW, PetSpellType type = PETSPELL_NORMAL);
-        bool LearnSpell(uint32 spell_id);
-        void LearnSpellHighRank(uint32 spellid);
+        bool LearnSpell(uint32 spellId);
+        void LearnSpells(std::list<uint32> learnSpells);
         void InitLevelupSpellsForLevel();
+        void UnlearnSpells(std::list<uint32> unlearnSpells, bool clear_ab = true);
         bool UnlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab = true);
         bool RemoveSpell(uint32 spell_id, bool learn_prev, bool clear_ab = true);
         void CleanupActionBar();

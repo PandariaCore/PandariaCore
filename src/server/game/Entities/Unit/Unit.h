@@ -2058,8 +2058,8 @@ class Unit : public WorldObject
         void ClearComboPointHolders();
 
         ///----------Pet responses methods-----------------
-        void SendPetActionFeedback (uint8 msg);
-        void SendPetTalk (uint32 pettalk);
+        void SendPetActionFeedback(uint8 msg, uint32 spellId = 0);
+        void SendPetTalk(uint32 pettalk);
         void SendPetAIReaction(uint64 guid);
         ///----------End of Pet responses methods----------
 

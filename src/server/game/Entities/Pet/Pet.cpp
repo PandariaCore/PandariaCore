@@ -1498,35 +1498,103 @@ bool Pet::AddSpell(uint32 spellId, ActiveStates active /*= ACT_DECIDE*/, PetSpel
     return true;
 }
 
-bool Pet::LearnSpell(uint32 spell_id)
+bool Pet::LearnSpell(uint32 spellId)
 {
-    // prevent duplicated entires in spell book
-    if (!AddSpell(spell_id))
+    if (!AddSpell(spellId))
         return false;
 
     if (!_loading)
     {
-        WorldPacket data(SMSG_PET_LEARNED_SPELL, 4);
-        data << uint32(spell_id);
+        WorldPacket data(SMSG_PET_LEARNED_SPELLS);
+        data.WriteBits(1, 22);
+        data.FlushBits();
+
+        data << uint32(spellId);
+
         GetOwner()->GetSession()->SendPacket(&data);
-        GetOwner()->PetSpellInitialize();
     }
-    return true;
 }
 
-bool Pet::UnlearnSpell(uint32 spell_id, bool learn_prev, bool clear_ab)
+void Pet::LearnSpells(std::list<uint32> learnSpells)
 {
-    if (RemoveSpell(spell_id, learn_prev, clear_ab))
+    if (!_loading)
+    {
+        uint32 spellCount = 0;
+
+        WorldPacket data(SMSG_PET_LEARNED_SPELLS);
+
+        size_t spellCountPos = data.bitwpos();
+        data.WriteBits(spellCount, 22);
+
+        data.FlushBits();
+
+        for (std::list<uint32>::const_iterator iter = learnSpells.begin(); iter != learnSpells.end(); iter++)
+        {
+            // prevent duplicated entires in spell book
+            if (!AddSpell(*iter))
+                continue;
+
+            data << uint32(*iter);
+
+            ++spellCount;
+        }
+
+        data.PutBits(spellCountPos, spellCount, 22);
+
+        GetOwner()->GetSession()->SendPacket(&data);
+
+        GetOwner()->PetSpellInitialize();
+    }
+}
+
+bool Pet::UnlearnSpell(uint32 spellId, bool learn_prev, bool clear_ab)
+{
+    if (RemoveSpell(spellId, learn_prev, clear_ab))
     {
         if (!_loading)
         {
-            WorldPacket data(SMSG_PET_REMOVED_SPELL, 4);
-            data << uint32(spell_id);
+            WorldPacket data(SMSG_PET_UNLEARNED_SPELLS);
+            data.WriteBits(1, 22);
+            data.FlushBits();
+
+            data << uint32(spellId);
+
             GetOwner()->GetSession()->SendPacket(&data);
         }
         return true;
     }
     return false;
+}
+
+void Pet::UnlearnSpells(std::list<uint32> unlearnSpells, bool clear_ab)
+{
+    if (!_loading)
+    {
+        uint32 spellCount = 0;
+
+        WorldPacket data(SMSG_PET_UNLEARNED_SPELLS);
+
+        size_t spellCountPos = data.bitwpos();
+        data.WriteBits(spellCount, 22);
+
+        data.FlushBits();
+
+        for (std::list<uint32>::const_iterator iter = unlearnSpells.begin(); iter != unlearnSpells.end(); iter++)
+        {
+            if (RemoveSpell(*iter, false, clear_ab))
+                continue;
+
+            data << uint32(*iter);
+
+            ++spellCount;
+        }
+
+        data.PutBits(spellCountPos, spellCount, 22);
+
+        GetOwner()->GetSession()->SendPacket(&data);
+
+        GetOwner()->PetSpellInitialize();
+    }
 }
 
 bool Pet::RemoveSpell(uint32 spell_id, bool learn_prev, bool clear_ab)
@@ -1547,7 +1615,7 @@ bool Pet::RemoveSpell(uint32 spell_id, bool learn_prev, bool clear_ab)
 
     if (learn_prev)
     {
-        if (uint32 prev_id = sSpellMgr->GetPrevSpellInChain (spell_id))
+        if (uint32 prev_id = sSpellMgr->GetPrevSpellInChain(spell_id))
             LearnSpell(prev_id);
         else
             learn_prev = false;
@@ -1572,6 +1640,9 @@ void Pet::InitLevelupSpellsForLevel()
 {
     uint8 level = getLevel();
 
+    std::list<uint32> learnSpells;
+    std::list<uint32> unlearnSpells;
+
     if (PetLevelupSpellSet const* levelupSpells = GetCreatureTemplate()->family ? sSpellMgr->GetPetLevelupSpellList(GetCreatureTemplate()->family) : NULL)
     {
         // PetLevelupSpellSet ordered by levels, process in reversed order
@@ -1579,10 +1650,10 @@ void Pet::InitLevelupSpellsForLevel()
         {
             // will called first if level down
             if (itr->first > level)
-                UnlearnSpell(itr->second, true);                 // will learn prev rank if any
+                unlearnSpells.push_back(itr->second);                      // will learn prev rank if any
             // will called if level up
             else
-                LearnSpell(itr->second);                        // will unlearn prev rank if any
+                learnSpells.push_back(itr->second);                        // will unlearn prev rank if any
         }
     }
 
@@ -1599,12 +1670,18 @@ void Pet::InitLevelupSpellsForLevel()
 
             // will called first if level down
             if (spellInfo->SpellLevel > level)
-                UnlearnSpell(spellInfo->Id, true);
+                unlearnSpells.push_back(spellInfo->Id);
             // will called if level up
             else
-                LearnSpell(spellInfo->Id);
+                learnSpells.push_back(spellInfo->Id);
         }
     }
+    
+    if (learnSpells.size() > 0)
+        LearnSpells(learnSpells);
+
+    if (unlearnSpells.size() > 0)
+        UnlearnSpells(unlearnSpells);
 }
 
 void Pet::CleanupActionBar()
@@ -1646,6 +1723,8 @@ void Pet::SendPetSpecialization()
 
 void Pet::LearnSpecializationSpells()
 {
+    std::list<uint32> learnSpells;
+
     for (uint32 i = 0; i < sSpecializationSpellsStore.GetNumRows(); i++)
     {
         SpecializationSpellsEntry const* specializationEntry = sSpecializationSpellsStore.LookupEntry(i);
@@ -1655,12 +1734,16 @@ void Pet::LearnSpecializationSpells()
         if (specializationEntry->SpecializationId != GetSpecialization())
             continue;
 
-        LearnSpell(specializationEntry->SpellId);
+        learnSpells.push_back(specializationEntry->SpellId);
     }
+
+    LearnSpells(learnSpells);
 }
 
 void Pet::UnlearnSpecializationSpells()
 {
+    std::list<uint32> unlearnSpells;
+
     for (uint32 i = 0; i < sSpecializationSpellsStore.GetNumRows(); i++)
     {
         SpecializationSpellsEntry const* specializationEntry = sSpecializationSpellsStore.LookupEntry(i);
@@ -1670,8 +1753,10 @@ void Pet::UnlearnSpecializationSpells()
         if (specializationEntry->SpecializationId != GetSpecialization())
             continue;
 
-        UnlearnSpell(specializationEntry->SpellId, false);
+        unlearnSpells.push_back(specializationEntry->SpellId);
     }
+
+    UnlearnSpells(unlearnSpells);
 }
 
 void Pet::ToggleAutocast(SpellInfo const* spellInfo, bool apply)
@@ -1843,14 +1928,6 @@ bool Pet::IsPetAura(Aura const* aura)
             return true;
     }
     return false;
-}
-
-void Pet::LearnSpellHighRank(uint32 spellid)
-{
-    LearnSpell(spellid);
-
-    if (uint32 next = sSpellMgr->GetNextSpellInChain(spellid))
-        LearnSpellHighRank(next);
 }
 
 void Pet::SynchronizeLevelWithOwner()

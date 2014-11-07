@@ -777,8 +777,26 @@ void WorldSession::HandleBattlemasterJoinArena(WorldPacket& recvData)
 
 void WorldSession::HandleReportPvPAFK(WorldPacket& recvData)
 {
-    uint64 playerGuid;
-    recvData >> playerGuid;
+    ObjectGuid playerGuid;
+
+    playerGuid[3] = recvData.ReadBit();  // 19
+    playerGuid[6] = recvData.ReadBit();  // 22
+    playerGuid[1] = recvData.ReadBit();  // 17
+    playerGuid[4] = recvData.ReadBit();  // 20
+    playerGuid[5] = recvData.ReadBit();  // 21
+    playerGuid[0] = recvData.ReadBit();  // 16
+    playerGuid[7] = recvData.ReadBit();  // 23
+    playerGuid[2] = recvData.ReadBit();  // 18
+
+    recvData.ReadByteSeq(playerGuid[3]);  // 19
+    recvData.ReadByteSeq(playerGuid[0]);  // 16
+    recvData.ReadByteSeq(playerGuid[4]);  // 20
+    recvData.ReadByteSeq(playerGuid[1]);  // 17
+    recvData.ReadByteSeq(playerGuid[7]);  // 23
+    recvData.ReadByteSeq(playerGuid[6]);  // 22
+    recvData.ReadByteSeq(playerGuid[2]);  // 18
+    recvData.ReadByteSeq(playerGuid[5]);  // 21
+    
     Player* reportedPlayer = ObjectAccessor::FindPlayer(playerGuid);
 
     if (!reportedPlayer)

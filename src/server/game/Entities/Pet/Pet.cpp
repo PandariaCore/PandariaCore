@@ -1513,6 +1513,8 @@ bool Pet::LearnSpell(uint32 spellId)
 
         GetOwner()->GetSession()->SendPacket(&data);
     }
+
+    return true;
 }
 
 void Pet::LearnSpells(std::list<uint32> learnSpells)
